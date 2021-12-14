@@ -9,10 +9,29 @@ type ShipCoordinator interface {
 	PlaceShips(board *Board, ships []Ship)
 }
 
-type EdgeFormation struct {
+type RandomCoordinator struct {
+	coordinators []ShipCoordinator
 }
 
-func (f EdgeFormation) PlaceShips(board *Board, ships []Ship) {
+func makeRandomCoordinator() ShipCoordinator {
+	return RandomCoordinator{
+		[]ShipCoordinator{
+			RandomFormation{&randomLine{}},
+			EdgeLover{},
+		},
+	}
+}
+
+func (c RandomCoordinator) PlaceShips(board *Board, ships []Ship) {
+	rand.Seed(time.Now().UnixNano())
+	randPick := rand.Intn(len(c.coordinators))
+	c.coordinators[randPick].PlaceShips(board, ships)
+}
+
+type EdgeLover struct {
+}
+
+func (f EdgeLover) PlaceShips(board *Board, ships []Ship) {
 	rand.Seed(time.Now().UnixNano())
 	ps := f.initEdgePoints(board.getSize())
 	var shipPoints []Point
@@ -31,7 +50,7 @@ func (f EdgeFormation) PlaceShips(board *Board, ships []Ship) {
 	}
 }
 
-func (f EdgeFormation) initEdgePoints(boardSize int) [][]Point {
+func (f EdgeLover) initEdgePoints(boardSize int) [][]Point {
 	ps := make([][]Point, 4)
 	ps[0] = make([]Point, boardSize)
 	ps[1] = make([]Point, boardSize)
@@ -56,15 +75,11 @@ func (f EdgeFormation) initEdgePoints(boardSize int) [][]Point {
 	return ps
 }
 
-func makeEdgeFormation(board *Board, ships []Ship) EdgeFormation {
-	return EdgeFormation{}
-}
-
-type Formation struct {
+type RandomFormation struct {
 	ln LineNavigator
 }
 
-func (f Formation) PlaceShips(board *Board, ships []Ship) {
+func (f RandomFormation) PlaceShips(board *Board, ships []Ship) {
 	var randPoint Point
 	var ps []Point
 	var err error
@@ -83,7 +98,7 @@ func (f Formation) PlaceShips(board *Board, ships []Ship) {
 	}
 }
 
-func (f Formation) placeShipAtPoint(board *Board, p Point, length int) ([]Point, error) {
+func (f RandomFormation) placeShipAtPoint(board *Board, p Point, length int) ([]Point, error) {
 	ps := make([]Point, length)
 	for i := 0; i < length; i++ {
 		if !board.IsEmptySpace(p) {
