@@ -57,5 +57,8 @@ func (b Board) Print() {
 }
 
 func (b Board) IsEmptySpace(p Point) bool {
+	if p.X >= b.size || p.X < 0 || p.Y >= b.size || p.Y < 0 {
+		return false
+	}
 	return b.points[p.X][p.Y] == EMPTY_SPACE
 }

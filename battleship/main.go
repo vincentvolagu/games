@@ -14,8 +14,8 @@ func main() {
 		Ship{"C", 5},
 	}
 
-	formation := HorizontalFormation{board, ships}
-	formation.Form()
+	formation := makeRandomFormation(board, ships)
+	formation.PlaceShips()
 	board.Print()
 
 	fmt.Println("end")
