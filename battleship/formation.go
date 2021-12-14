@@ -5,123 +5,92 @@ import (
 	"time"
 )
 
-type EdgeFormation struct {
-	board *Board
-	ships []Ship
+type ShipCoordinator interface {
+	PlaceShips(board *Board, ships []Ship)
 }
 
-func (f EdgeFormation) PlaceShips() {
+type EdgeFormation struct {
+}
+
+func (f EdgeFormation) PlaceShips(board *Board, ships []Ship) {
 	rand.Seed(time.Now().UnixNano())
-	ps := f.initEdgePoints()
+	ps := f.initEdgePoints(board.getSize())
 	var shipPoints []Point
-	for _, ship := range f.ships {
+	for _, ship := range ships {
 		for {
 			randEdge := rand.Intn(4)
-			randIndex := rand.Intn(f.board.getSize() - ship.length)
+			randIndex := rand.Intn(board.getSize() - ship.length)
 			shipPoints = ps[randEdge][randIndex : randIndex+ship.length]
-			if f.board.AreEmptySpaces(shipPoints) {
+			if board.AreEmptySpaces(shipPoints) {
 				break
 			}
 		}
 		for _, p := range shipPoints {
-			f.board.PlaceShipAt(p, ship.name)
+			board.PlaceShipAt(p, ship.name)
 		}
 	}
 }
 
-func (f EdgeFormation) initEdgePoints() [][]Point {
+func (f EdgeFormation) initEdgePoints(boardSize int) [][]Point {
 	ps := make([][]Point, 4)
-	ps[0] = make([]Point, f.board.getSize())
-	ps[1] = make([]Point, f.board.getSize())
-	ps[2] = make([]Point, f.board.getSize())
-	ps[3] = make([]Point, f.board.getSize())
+	ps[0] = make([]Point, boardSize)
+	ps[1] = make([]Point, boardSize)
+	ps[2] = make([]Point, boardSize)
+	ps[3] = make([]Point, boardSize)
 	// top edge
-	for i := 0; i < f.board.getSize(); i++ {
+	for i := 0; i < boardSize; i++ {
 		ps[0][i] = Point{0, i}
 	}
 	// bottom edge
-	for i := 0; i < f.board.getSize(); i++ {
-		ps[1][i] = Point{f.board.getSize() - 1, i}
+	for i := 0; i < boardSize; i++ {
+		ps[1][i] = Point{boardSize - 1, i}
 	}
 	// left edge
-	for i := 0; i < f.board.getSize(); i++ {
+	for i := 0; i < boardSize; i++ {
 		ps[2][i] = Point{i, 0}
 	}
 	// right edge
-	for i := 0; i < f.board.getSize(); i++ {
-		ps[3][i] = Point{i, f.board.getSize() - 1}
+	for i := 0; i < boardSize; i++ {
+		ps[3][i] = Point{i, boardSize - 1}
 	}
 	return ps
 }
 
 func makeEdgeFormation(board *Board, ships []Ship) EdgeFormation {
-	return EdgeFormation{board, ships}
+	return EdgeFormation{}
 }
 
 type Formation struct {
-	board     *Board
-	ships     []Ship
-	direction DirectionStrategy
+	ln LineNavigator
 }
 
-func makeHorizontalFormation(board *Board, ships []Ship) Formation {
-	return Formation{
-		board,
-		ships,
-		horizontal{},
-	}
-}
-func makeVerticalFormation(board *Board, ships []Ship) Formation {
-	return Formation{
-		board,
-		ships,
-		vertical{},
-	}
-}
-func makeRandomFormation(board *Board, ships []Ship) Formation {
-	return Formation{
-		board,
-		ships,
-		&randomDirection{},
-	}
-}
-
-func (f Formation) PlaceShips() {
-	for _, ship := range f.ships {
-		f.direction.Reset()
-		ps := f.findSpotForShip(ship.length)
+func (f Formation) PlaceShips(board *Board, ships []Ship) {
+	var randPoint Point
+	var ps []Point
+	var err error
+	for _, ship := range ships {
+		f.ln.Reset()
+		for {
+			randPoint = board.PickRandomPoint()
+			ps, err = f.placeShipAtPoint(board, randPoint, ship.length)
+			if err == nil {
+				break
+			}
+		}
 		for _, p := range ps {
-			f.board.PlaceShipAt(p, ship.name)
+			board.PlaceShipAt(p, ship.name)
 		}
 	}
 }
 
-func (f Formation) findSpotForShip(length int) []Point {
-	var ps []Point
-	var err error
-	p := f.getRandomPoint(length)
-	for ps, err = f.placeShipAtPoint(p, length); err != nil; {
-		p = f.getRandomPoint(length)
-		ps, err = f.placeShipAtPoint(p, length)
-	}
-	return ps
-}
-
-func (f Formation) getRandomPoint(length int) Point {
-	rand.Seed(time.Now().UnixNano())
-	randX := rand.Intn(f.board.getSize())
-	randY := rand.Intn(f.board.getSize())
-	return Point{randX, randY}
-}
-
-func (f Formation) placeShipAtPoint(p Point, length int) ([]Point, error) {
+func (f Formation) placeShipAtPoint(board *Board, p Point, length int) ([]Point, error) {
 	ps := make([]Point, length)
 	for i := 0; i < length; i++ {
-		if !f.board.IsEmptySpace(p) {
+		if !board.IsEmptySpace(p) {
 			return []Point{}, NoSpaceForShipError{}
 		}
 		ps[i] = p
-		p = f.direction.NextPoint(p)
+		p = f.ln.NextPoint(p)
 	}
 	return ps, nil
 }
@@ -130,46 +99,4 @@ type NoSpaceForShipError struct{}
 
 func (e NoSpaceForShipError) Error() string {
 	return "no space for ship"
-}
-
-type DirectionStrategy interface {
-	Reset()
-	NextPoint(p Point) Point
-}
-
-type horizontal struct {
-}
-
-func (f horizontal) NextPoint(p Point) Point {
-	return p.right()
-}
-func (f horizontal) Reset() {
-}
-
-type vertical struct {
-}
-
-func (f vertical) NextPoint(p Point) Point {
-	return p.down()
-}
-func (f vertical) Reset() {
-}
-
-type randomDirection struct {
-	ds DirectionStrategy
-}
-
-func (f *randomDirection) Reset() {
-	randNum := rand.Intn(100) % 2
-	if randNum == 0 {
-		f.ds = horizontal{}
-	} else {
-		f.ds = vertical{}
-	}
-}
-func (f *randomDirection) NextPoint(p Point) Point {
-	if f.ds == nil {
-		f.Reset()
-	}
-	return f.ds.NextPoint(p)
 }

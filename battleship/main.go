@@ -14,8 +14,8 @@ func main() {
 		Ship{"C", 5},
 	}
 
-	formation := makeEdgeFormation(board, ships)
-	formation.PlaceShips()
+	formation := Formation{&randomLine{}}
+	formation.PlaceShips(board, ships)
 	board.Print()
 
 	fmt.Println("================================================")

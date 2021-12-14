@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 )
 
 const EMPTY_SPACE = "."
@@ -54,6 +56,11 @@ func (b *Board) PlaceShipAt(p Point, name string) {
 		panic("point is out of bound")
 	}
 	b.points[p.X][p.Y] = name
+}
+
+func (b *Board) PickRandomPoint() Point {
+	rand.Seed(time.Now().UnixNano())
+	return Point{rand.Intn(b.size), rand.Intn(b.size)}
 }
 
 func (b Board) Print() {
