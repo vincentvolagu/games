@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const EMPTY_SPACE = "."
 const HIT = "x"
@@ -32,6 +34,10 @@ type Board struct {
 	points [][]string
 }
 
+func (b *Board) getSize() int {
+	return b.size
+}
+
 func (b *Board) Init(size int) {
 	b.size = size
 	b.points = make([][]string, size)
@@ -41,6 +47,13 @@ func (b *Board) Init(size int) {
 			b.points[i][j] = EMPTY_SPACE
 		}
 	}
+}
+
+func (b *Board) PlaceShipAt(p Point, name string) {
+	if b.IsOutOfBound(p) {
+		panic("point is out of bound")
+	}
+	b.points[p.X][p.Y] = name
 }
 
 func (b Board) Print() {

@@ -17,39 +17,39 @@ func (f EdgeFormation) PlaceShips() {
 	for _, ship := range f.ships {
 		for {
 			randEdge := rand.Intn(4)
-			randIndex := rand.Intn(f.board.size - ship.length)
+			randIndex := rand.Intn(f.board.getSize() - ship.length)
 			shipPoints = ps[randEdge][randIndex : randIndex+ship.length]
 			if f.board.AreEmptySpaces(shipPoints) {
 				break
 			}
 		}
 		for _, p := range shipPoints {
-			f.board.points[p.X][p.Y] = ship.name
+			f.board.PlaceShipAt(p, ship.name)
 		}
 	}
 }
 
 func (f EdgeFormation) initEdgePoints() [][]Point {
 	ps := make([][]Point, 4)
-	ps[0] = make([]Point, f.board.size)
-	ps[1] = make([]Point, f.board.size)
-	ps[2] = make([]Point, f.board.size)
-	ps[3] = make([]Point, f.board.size)
+	ps[0] = make([]Point, f.board.getSize())
+	ps[1] = make([]Point, f.board.getSize())
+	ps[2] = make([]Point, f.board.getSize())
+	ps[3] = make([]Point, f.board.getSize())
 	// top edge
-	for i := 0; i < f.board.size; i++ {
+	for i := 0; i < f.board.getSize(); i++ {
 		ps[0][i] = Point{0, i}
 	}
 	// bottom edge
-	for i := 0; i < f.board.size; i++ {
-		ps[1][i] = Point{f.board.size - 1, i}
+	for i := 0; i < f.board.getSize(); i++ {
+		ps[1][i] = Point{f.board.getSize() - 1, i}
 	}
 	// left edge
-	for i := 0; i < f.board.size; i++ {
+	for i := 0; i < f.board.getSize(); i++ {
 		ps[2][i] = Point{i, 0}
 	}
 	// right edge
-	for i := 0; i < f.board.size; i++ {
-		ps[3][i] = Point{i, f.board.size - 1}
+	for i := 0; i < f.board.getSize(); i++ {
+		ps[3][i] = Point{i, f.board.getSize() - 1}
 	}
 	return ps
 }
@@ -91,7 +91,7 @@ func (f Formation) PlaceShips() {
 		f.direction.Reset()
 		ps := f.findSpotForShip(ship.length)
 		for _, p := range ps {
-			f.board.points[p.X][p.Y] = ship.name
+			f.board.PlaceShipAt(p, ship.name)
 		}
 	}
 }
@@ -109,8 +109,8 @@ func (f Formation) findSpotForShip(length int) []Point {
 
 func (f Formation) getRandomPoint(length int) Point {
 	rand.Seed(time.Now().UnixNano())
-	randX := rand.Intn(f.board.size)
-	randY := rand.Intn(f.board.size)
+	randX := rand.Intn(f.board.getSize())
+	randY := rand.Intn(f.board.getSize())
 	return Point{randX, randY}
 }
 
