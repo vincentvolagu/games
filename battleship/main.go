@@ -18,5 +18,20 @@ func main() {
 	formation.PlaceShips()
 	board.Print()
 
-	fmt.Println("end")
+	fmt.Println("================================================")
+	gunner := NewLinearGunner(board)
+	for {
+		target := gunner.Target()
+		result := board.Hit(target)
+		if result {
+			gunner.Hit(target)
+		} else {
+			gunner.Miss(target)
+		}
+		if board.IsGameOver() {
+			break
+		}
+	}
+
+	board.Print()
 }

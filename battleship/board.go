@@ -43,10 +43,6 @@ func (b *Board) Init(size int) {
 	}
 }
 
-func (b *Board) placeShip(x, y int, ship Ship) {
-
-}
-
 func (b Board) Print() {
 	for i := 0; i < b.size; i++ {
 		for j := 0; j < b.size; j++ {
@@ -56,11 +52,46 @@ func (b Board) Print() {
 	}
 }
 
+func (b Board) IsGameOver() bool {
+	// game over when all left is empty space or sunking ships
+	for i := 0; i < b.size; i++ {
+		for j := 0; j < b.size; j++ {
+			p := Point{i, j}
+			if !b.IsEmptySpace(p) && !b.IsSunkShip(p) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (b Board) IsOutOfBound(p Point) bool {
+	return p.X >= b.size || p.X < 0 || p.Y >= b.size || p.Y < 0
+}
+
 func (b Board) IsEmptySpace(p Point) bool {
-	if p.X >= b.size || p.X < 0 || p.Y >= b.size || p.Y < 0 {
+	if b.IsOutOfBound(p) {
 		return false
 	}
 	return b.points[p.X][p.Y] == EMPTY_SPACE
+}
+
+func (b Board) IsSunkShip(p Point) bool {
+	if b.IsOutOfBound(p) {
+		return false
+	}
+	return b.points[p.X][p.Y] == HIT
+}
+
+func (b Board) Hit(p Point) bool {
+	if b.IsOutOfBound(p) {
+		return false
+	}
+	if b.IsEmptySpace(p) {
+		return false
+	}
+	b.points[p.X][p.Y] = HIT
+	return true
 }
 
 func (b Board) AreEmptySpaces(ps []Point) bool {
