@@ -6,9 +6,56 @@ import (
 )
 
 type EdgeFormation struct {
-	board     *Board
-	ships     []Ship
-	direction DirectionStrategy
+	board *Board
+	ships []Ship
+}
+
+func (f EdgeFormation) PlaceShips() {
+	rand.Seed(time.Now().UnixNano())
+	ps := f.initEdgePoints()
+	var shipPoints []Point
+	for _, ship := range f.ships {
+		for {
+			randEdge := rand.Intn(4)
+			randIndex := rand.Intn(f.board.size - ship.length)
+			shipPoints = ps[randEdge][randIndex : randIndex+ship.length]
+			if f.board.AreEmptySpaces(shipPoints) {
+				break
+			}
+		}
+		for _, p := range shipPoints {
+			f.board.points[p.X][p.Y] = ship.name
+		}
+	}
+}
+
+func (f EdgeFormation) initEdgePoints() [][]Point {
+	ps := make([][]Point, 4)
+	ps[0] = make([]Point, f.board.size)
+	ps[1] = make([]Point, f.board.size)
+	ps[2] = make([]Point, f.board.size)
+	ps[3] = make([]Point, f.board.size)
+	// top edge
+	for i := 0; i < f.board.size; i++ {
+		ps[0][i] = Point{0, i}
+	}
+	// bottom edge
+	for i := 0; i < f.board.size; i++ {
+		ps[1][i] = Point{f.board.size - 1, i}
+	}
+	// left edge
+	for i := 0; i < f.board.size; i++ {
+		ps[2][i] = Point{i, 0}
+	}
+	// right edge
+	for i := 0; i < f.board.size; i++ {
+		ps[3][i] = Point{i, f.board.size - 1}
+	}
+	return ps
+}
+
+func makeEdgeFormation(board *Board, ships []Ship) EdgeFormation {
+	return EdgeFormation{board, ships}
 }
 
 type Formation struct {

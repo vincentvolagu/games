@@ -62,3 +62,12 @@ func (b Board) IsEmptySpace(p Point) bool {
 	}
 	return b.points[p.X][p.Y] == EMPTY_SPACE
 }
+
+func (b Board) AreEmptySpaces(ps []Point) bool {
+	for _, p := range ps {
+		if !b.IsEmptySpace(p) {
+			return false
+		}
+	}
+	return true
+}
