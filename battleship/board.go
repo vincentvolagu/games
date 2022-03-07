@@ -26,6 +26,21 @@ func (p Point) down() Point {
 	return Point{p.X + 1, p.Y}
 }
 
+type Points []Point
+
+func (ps Points) Contains(p Point) bool {
+	for _, v := range ps {
+		if v == p {
+			return true
+		}
+	}
+	return false
+}
+
+func (ps Points) Add(p Point) Points {
+	return append(ps, p)
+}
+
 type Ship struct {
 	name   string
 	length int

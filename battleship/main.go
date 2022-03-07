@@ -21,21 +21,29 @@ func main() {
 		board.Print()
 
 		fmt.Println("================================================")
-		// gunner := NewLinearGunner(board)
-		// for {
-		// target := gunner.Target()
-		// result := board.Hit(target)
-		// if result {
-		// gunner.Hit(target)
-		// } else {
-		// gunner.Miss(target)
-		// }
-		// if board.IsGameOver() {
-		// break
-		// }
-		// }
-		// board.Print()
-		// fmt.Println("================================================")
+		// gunner := NewClusterGunner(board)
+		gunner := NewLinearGunner(board)
+		steps := 0
+		for {
+			steps = steps + 1
+			target := gunner.Target()
+			if board.IsOutOfBound(target) {
+				fmt.Println("gunner finished, game over")
+				break
+			}
+			result := board.Hit(target)
+			if result {
+				gunner.Hit(target)
+			} else {
+				gunner.Miss(target)
+			}
+			if board.IsGameOver() {
+				break
+			}
+		}
+		fmt.Println("takes", steps, "steps")
+		board.Print()
+		fmt.Println("================================================")
 	}
 
 }
