@@ -79,6 +79,10 @@ type RandomFormation struct {
 	ln LineNavigator
 }
 
+func MakeRandomFormation() RandomFormation {
+	return RandomFormation{&randomLine{}}
+}
+
 func (f RandomFormation) PlaceShips(board *Board, ships []Ship) {
 	var randPoint Point
 	var ps []Point

@@ -11,7 +11,7 @@ func main() {
 		Ship{"C", 5},
 	}
 
-	formation := makeRandomCoordinator()
+	formation := MakeRandomFormation()
 
 	for i := 0; i < 3; i++ {
 		board := &Board{}
@@ -21,8 +21,10 @@ func main() {
 		board.Print()
 
 		fmt.Println("================================================")
-		// gunner := NewClusterGunner(board)
-		gunner := NewLinearGunner(board)
+		gunner := NewClusterGunner(board)
+		// gunner := NewLinearGunner(board)
+		// gunner := NewDiagonalGunner(board, []int{5, 2})
+		// gunner := NewRandomGunner(board)
 		steps := 0
 		for {
 			steps = steps + 1
@@ -45,5 +47,4 @@ func main() {
 		board.Print()
 		fmt.Println("================================================")
 	}
-
 }
