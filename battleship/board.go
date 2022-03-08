@@ -7,7 +7,8 @@ import (
 )
 
 const EMPTY_SPACE = "."
-const HIT = "x"
+const HIT = "#"
+const MISS = "x"
 
 type Point struct {
 	X, Y int
@@ -78,6 +79,9 @@ func (b *Board) PickRandomPoint() Point {
 	return Point{rand.Intn(b.size), rand.Intn(b.size)}
 }
 
+func (b Board) columnHeading() []string {
+	return []string{" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
+}
 func (b Board) Print() {
 	for i := 0; i < b.size; i++ {
 		for j := 0; j < b.size; j++ {
@@ -86,13 +90,41 @@ func (b Board) Print() {
 		fmt.Println()
 	}
 }
+func (b Board) PrintForHumanPlayer() {
+	for _, v := range b.columnHeading() {
+		fmt.Print(v)
+	}
+	fmt.Println()
+	for i := 0; i < b.size; i++ {
+		fmt.Print(i + 1)
+		for j := 0; j < b.size; j++ {
+			if b.IsFloatingShip(Point{i, j}) {
+				fmt.Print(EMPTY_SPACE)
+			} else {
+				fmt.Print(b.points[i][j])
+			}
+		}
+		fmt.Println()
+	}
+}
+func (b Board) TransformHumanPointInput(row int, col string) Point {
+	rowIndex := row - 1
+	colIndex := -1
+	for i, v := range b.columnHeading() {
+		if v == col {
+			colIndex = i - 1 // there's an empty left padding
+		}
+	}
+
+	return Point{rowIndex, colIndex}
+}
 
 func (b Board) IsGameOver() bool {
 	// game over when all left is empty space or sunking ships
 	for i := 0; i < b.size; i++ {
 		for j := 0; j < b.size; j++ {
 			p := Point{i, j}
-			if !b.IsEmptySpace(p) && !b.IsSunkShip(p) {
+			if b.IsFloatingShip(p) {
 				return false
 			}
 		}
@@ -103,32 +135,44 @@ func (b Board) IsGameOver() bool {
 func (b Board) IsOutOfBound(p Point) bool {
 	return p.X >= b.size || p.X < 0 || p.Y >= b.size || p.Y < 0
 }
-
+func (b Board) IsFloatingShip(p Point) bool {
+	return !b.IsEmptySpace(p) && !b.IsSunkShip(p) && !b.IsMiss(p)
+}
 func (b Board) IsEmptySpace(p Point) bool {
 	if b.IsOutOfBound(p) {
 		return false
 	}
 	return b.points[p.X][p.Y] == EMPTY_SPACE
 }
-
 func (b Board) IsSunkShip(p Point) bool {
 	if b.IsOutOfBound(p) {
 		return false
 	}
 	return b.points[p.X][p.Y] == HIT
 }
-
+func (b Board) IsMiss(p Point) bool {
+	if b.IsOutOfBound(p) {
+		return false
+	}
+	return b.points[p.X][p.Y] == MISS
+}
 func (b Board) Hit(p Point) bool {
 	if b.IsOutOfBound(p) {
 		return false
 	}
 	if b.IsEmptySpace(p) {
+		b.points[p.X][p.Y] = MISS
 		return false
 	}
 	b.points[p.X][p.Y] = HIT
 	return true
 }
-
+func (b Board) RecordHit(p Point) {
+	b.points[p.X][p.Y] = HIT
+}
+func (b Board) RecordMiss(p Point) {
+	b.points[p.X][p.Y] = MISS
+}
 func (b Board) AreEmptySpaces(ps []Point) bool {
 	for _, p := range ps {
 		if !b.IsEmptySpace(p) {

@@ -11,48 +11,118 @@ func main() {
 		Ship{"C", 5},
 	}
 
+	playHuman(ships)
+	// formation := MakeRandomFormation()
+	// summary := []int{}
+	// for i := 0; i < 1; i++ {
+	// board := &Board{}
+	// board.Init(10)
+	// formation.PlaceShips(board, ships)
+
+	// board.PrintForHumanPlayer()
+
+	// // fmt.Println("================================================")
+	// gunner := NewClusterGunner(board, []int{5, 4, 3, 2})
+	// // gunner := NewLinearGunner(board)
+	// // gunner := NewDiagonalGunner(board, []int{5, 2})
+	// // gunner := NewRandomGunner(board)
+	// steps := 0
+	// for {
+	// steps = steps + 1
+	// target := gunner.Target()
+	// if board.IsOutOfBound(target) {
+	// // fmt.Println("gunner finished, game over")
+	// break
+	// }
+	// result := board.Hit(target)
+	// if result {
+	// gunner.Hit(target)
+	// } else {
+	// gunner.Miss(target)
+	// }
+	// if board.IsGameOver() {
+	// break
+	// }
+	// }
+	// fmt.Println("takes", steps, "steps")
+	// summary = append(summary, steps)
+	// // board.Print()
+	// // fmt.Println("================================================")
+	// }
+
+	// sum := 0
+	// for _, v := range summary {
+	// sum = sum + v
+	// }
+	// avg := sum / len(summary)
+	// fmt.Println("Summary: avg = ", avg, "steps")
+}
+
+func playHuman(ships []Ship) {
+	// initialise the computer board and place ships
+	myBoard := &Board{}
+	myBoard.Init(10)
 	formation := MakeRandomFormation()
-	summary := []int{}
-	for i := 0; i < 100; i++ {
-		board := &Board{}
-		board.Init(20)
-		formation.PlaceShips(board, ships)
+	formation.PlaceShips(myBoard, ships)
+	myBoard.Print()
+	myBoard.PrintForHumanPlayer()
 
-		// board.Print()
+	humanBoard := &Board{}
+	humanBoard.Init(10)
+	gunner := NewClusterGunner(humanBoard, []int{5, 4, 3, 2})
 
-		// fmt.Println("================================================")
-		gunner := NewClusterGunner(board, []int{5, 4, 3, 2})
-		// gunner := NewLinearGunner(board)
-		// gunner := NewDiagonalGunner(board, []int{5, 2})
-		// gunner := NewRandomGunner(board)
-		steps := 0
-		for {
-			steps = steps + 1
-			target := gunner.Target()
-			if board.IsOutOfBound(target) {
-				// fmt.Println("gunner finished, game over")
-				break
-			}
-			result := board.Hit(target)
-			if result {
-				gunner.Hit(target)
-			} else {
-				gunner.Miss(target)
-			}
-			if board.IsGameOver() {
-				break
-			}
+	for {
+		// take human player's next target
+		fmt.Println("================================================")
+		fmt.Println("enter row number")
+		var row int
+		fmt.Scanln(&row)
+
+		fmt.Println("enter column")
+		var col string
+		fmt.Scanln(&col)
+
+		p := myBoard.TransformHumanPointInput(row, col)
+
+		if myBoard.IsOutOfBound(p) {
+			fmt.Println("you target", row, col, "is a invalid point, please try again")
+			continue
 		}
-		fmt.Println("takes", steps, "steps")
-		summary = append(summary, steps)
-		// board.Print()
-		// fmt.Println("================================================")
-	}
 
-	sum := 0
-	for _, v := range summary {
-		sum = sum + v
+		isHit := myBoard.Hit(p)
+		fmt.Println("you target", row, col, "is", isHit)
+		myBoard.PrintForHumanPlayer()
+
+		if myBoard.IsGameOver() {
+			fmt.Println("Congrats, you win, thanks for playing")
+			break
+		}
+
+		// computer's turn
+		target := gunner.Target()
+		if humanBoard.IsOutOfBound(target) {
+			fmt.Println("I'm out of guesses, you win, thanks for playing")
+			break
+		}
+		fmt.Println("Computer picks", target, "please enter if it's a hit [y/n]")
+		var hit string
+		fmt.Scanln(&hit)
+		if hit == "y" {
+			humanBoard.RecordHit(target)
+			gunner.Hit(target)
+		} else {
+			humanBoard.RecordMiss(target)
+			gunner.Miss(target)
+		}
+		humanBoard.Print()
+
+		fmt.Println("Has computer hit all the ships? please enter [y/n]")
+		var gg string
+		fmt.Scanln(&gg)
+
+		if gg == "y" {
+			fmt.Println("Oops, you lose, thanks for playing")
+			break
+		}
 	}
-	avg := sum / len(summary)
-	fmt.Println("Summary: avg = ", avg, "steps")
 }
