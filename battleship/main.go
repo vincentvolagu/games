@@ -12,16 +12,16 @@ func main() {
 	}
 
 	formation := MakeRandomFormation()
-
-	for i := 0; i < 3; i++ {
+	summary := []int{}
+	for i := 0; i < 100; i++ {
 		board := &Board{}
-		board.Init(10)
+		board.Init(20)
 		formation.PlaceShips(board, ships)
 
-		board.Print()
+		// board.Print()
 
-		fmt.Println("================================================")
-		gunner := NewClusterGunner(board)
+		// fmt.Println("================================================")
+		gunner := NewClusterGunner(board, []int{5, 4, 3, 2})
 		// gunner := NewLinearGunner(board)
 		// gunner := NewDiagonalGunner(board, []int{5, 2})
 		// gunner := NewRandomGunner(board)
@@ -30,7 +30,7 @@ func main() {
 			steps = steps + 1
 			target := gunner.Target()
 			if board.IsOutOfBound(target) {
-				fmt.Println("gunner finished, game over")
+				// fmt.Println("gunner finished, game over")
 				break
 			}
 			result := board.Hit(target)
@@ -44,7 +44,15 @@ func main() {
 			}
 		}
 		fmt.Println("takes", steps, "steps")
-		board.Print()
-		fmt.Println("================================================")
+		summary = append(summary, steps)
+		// board.Print()
+		// fmt.Println("================================================")
 	}
+
+	sum := 0
+	for _, v := range summary {
+		sum = sum + v
+	}
+	avg := sum / len(summary)
+	fmt.Println("Summary: avg = ", avg, "steps")
 }

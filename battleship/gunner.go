@@ -8,23 +8,36 @@ type Gunner interface {
 	Miss(p Point)
 }
 
+// randomGunner hits random targets without any memory of hit/miss history
 type randomGunner struct {
-	board *Board
+	board        *Board
+	triedTargets Points
 }
 
 func NewRandomGunner(board *Board) Gunner {
 	return &randomGunner{
 		board,
+		Points{},
 	}
 }
 func (g *randomGunner) Target() Point {
-	return g.board.PickRandomPoint()
+	var p Point
+	for {
+		p = g.board.PickRandomPoint()
+		if !g.triedTargets.Contains(p) {
+			break
+		}
+	}
+	return p
 }
 func (g *randomGunner) Hit(p Point) {
+	g.triedTargets = g.triedTargets.Add(p)
 }
 func (g *randomGunner) Miss(p Point) {
+	g.triedTargets = g.triedTargets.Add(p)
 }
 
+// linearGunner hits targets by linear scanning (left to right, top to bottom)
 type linearGunner struct {
 	board      *Board
 	lastTarget Point
@@ -84,13 +97,11 @@ func (g *diagonalGunner) markCandidates(shipSizes []int) {
 		}
 	}
 }
-
 func (g *diagonalGunner) print() {
 	for _, v := range g.candidates {
 		fmt.Println(v)
 	}
 }
-
 func (g *diagonalGunner) Target() Point {
 	// go through all candidates if any remains
 	var p Point
@@ -100,7 +111,7 @@ func (g *diagonalGunner) Target() Point {
 		return p
 	}
 
-	return g.board.PickRandomPoint()
+	return Point{-1, -1}
 }
 func (g *diagonalGunner) Hit(p Point) {
 }
@@ -109,47 +120,79 @@ func (g *diagonalGunner) Miss(p Point) {
 
 // ClusterGunner take the strategry of targeting all the adjacent points to the last hit
 type ClusterGunner struct {
-	board        *Board
-	triedTargets Points
-	candidates   []Point
+	board             *Board
+	triedTargets      Points
+	candidates        []Point
+	defaultCandidates []Point
+	triedIndex        int
 }
 
-func NewClusterGunner(board *Board) Gunner {
-	return &ClusterGunner{
+func NewClusterGunner(board *Board, shipSizes []int) Gunner {
+	g := &ClusterGunner{
 		board,
 		Points{},
 		[]Point{},
+		[]Point{},
+		0,
+	}
+	g.markCandidates(shipSizes)
+	return g
+}
+func (g *ClusterGunner) markCandidates(shipSizes []int) {
+	// ASSUME the ship sizes are already sorted in descending order without duplicates
+	for _, shipSize := range shipSizes {
+		for row := 0; row < g.board.getSize(); row++ {
+			repetition := g.board.getSize() / shipSize
+			for i := 1; i <= repetition; i++ {
+				col := shipSize*i - 1 - (row % shipSize)
+				g.defaultCandidates = append(g.defaultCandidates, Point{row, col})
+			}
+		}
 	}
 }
-func (cg *ClusterGunner) Target() Point {
+func (g *ClusterGunner) Target() Point {
 	// target points on the candidate list
 	for {
-		n := len(cg.candidates)
+		n := len(g.candidates)
 		if n == 0 {
 			break
 		}
 
-		p := cg.candidates[n-1]
-		cg.candidates = cg.candidates[:n-1]
-		if !cg.triedTargets.Contains(p) {
+		p := g.candidates[n-1]
+		g.candidates = g.candidates[:n-1]
+		if !g.triedTargets.Contains(p) {
 			return p
 		}
 	}
 
-	// no cluster target, try a random one that hasn't tried before
+	// no cluster target, try a defaut strategy
+
+	// go through all candidates if any remains
 	var p Point
 	for {
-		p = cg.board.PickRandomPoint()
-		if !cg.triedTargets.Contains(p) {
+		if g.triedIndex >= len(g.defaultCandidates) {
+			break
+		}
+		p = g.defaultCandidates[g.triedIndex]
+		g.triedIndex++
+		if !g.triedTargets.Contains(p) {
+			return p
+		}
+	}
+
+	for {
+		p = g.board.PickRandomPoint()
+		if !g.triedTargets.Contains(p) {
 			break
 		}
 	}
+
 	return p
 }
 
-func (cg *ClusterGunner) Hit(p Point) {
+func (g *ClusterGunner) Hit(p Point) {
 	// record the hit
-	cg.triedTargets = cg.triedTargets.Add(p)
+	g.triedTargets = g.triedTargets.Add(p)
 
 	// record the cluster points next to this point
 	cluster := []Point{
@@ -161,12 +204,12 @@ func (cg *ClusterGunner) Hit(p Point) {
 
 	// filter out the outOfBound or already hit ones
 	for _, v := range cluster {
-		if !cg.board.IsOutOfBound(v) && !cg.triedTargets.Contains(v) {
-			cg.candidates = append(cg.candidates, v)
+		if !g.board.IsOutOfBound(v) && !g.triedTargets.Contains(v) {
+			g.candidates = append(g.candidates, v)
 		}
 	}
 }
 
-func (cg *ClusterGunner) Miss(p Point) {
-	cg.triedTargets = cg.triedTargets.Add(p)
+func (g *ClusterGunner) Miss(p Point) {
+	g.triedTargets = g.triedTargets.Add(p)
 }
