@@ -69,6 +69,7 @@ func playHuman(ships []Ship) {
 
 	humanBoard := &Board{}
 	humanBoard.Init(10)
+	humanBoard.SetShips(ships)
 	gunner := NewClusterGunner(humanBoard, []int{5, 4, 3, 2})
 
 	for {
@@ -91,6 +92,7 @@ func playHuman(ships []Ship) {
 
 		isHit := myBoard.Hit(p)
 		fmt.Println("you target", row, col, "is", isHit)
+		fmt.Println("============== Computer's Board =============================")
 		myBoard.PrintForHumanPlayer()
 
 		if myBoard.IsGameOver() {
@@ -104,7 +106,8 @@ func playHuman(ships []Ship) {
 			fmt.Println("I'm out of guesses, you win, thanks for playing")
 			break
 		}
-		fmt.Println("Computer picks", target, "please enter if it's a hit [y/n]")
+		targetRow, targetCol := humanBoard.TransformPointForHuman(target)
+		fmt.Println("Computer picks", target, targetRow, targetCol, "please enter if it's a hit [y/n]")
 		var hit string
 		fmt.Scanln(&hit)
 		if hit == "y" {
@@ -114,13 +117,10 @@ func playHuman(ships []Ship) {
 			humanBoard.RecordMiss(target)
 			gunner.Miss(target)
 		}
-		humanBoard.Print()
+		fmt.Println("============== Player's Board =============================")
+		humanBoard.PrintForHumanPlayer()
 
-		fmt.Println("Has computer hit all the ships? please enter [y/n]")
-		var gg string
-		fmt.Scanln(&gg)
-
-		if gg == "y" {
+		if humanBoard.HasHitAllShips() {
 			fmt.Println("Oops, you lose, thanks for playing")
 			break
 		}

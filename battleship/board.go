@@ -50,6 +50,10 @@ type Ship struct {
 type Board struct {
 	size   int
 	points [][]string
+
+	totalShipPoints int
+	hits            int
+	misses          int
 }
 
 func (b *Board) getSize() int {
@@ -64,6 +68,13 @@ func (b *Board) Init(size int) {
 		for j := 0; j < size; j++ {
 			b.points[i][j] = EMPTY_SPACE
 		}
+	}
+}
+
+func (b *Board) SetShips(ships []Ship) {
+	b.totalShipPoints = 0
+	for _, ship := range ships {
+		b.totalShipPoints = b.totalShipPoints + ship.length
 	}
 }
 
@@ -118,6 +129,11 @@ func (b Board) TransformHumanPointInput(row int, col string) Point {
 
 	return Point{rowIndex, colIndex}
 }
+func (b Board) TransformPointForHuman(point Point) (row int, col string) {
+	row = point.X + 1
+	col = b.columnHeading()[point.Y+1]
+	return row, col
+}
 
 func (b Board) IsGameOver() bool {
 	// game over when all left is empty space or sunking ships
@@ -169,9 +185,14 @@ func (b Board) Hit(p Point) bool {
 }
 func (b Board) RecordHit(p Point) {
 	b.points[p.X][p.Y] = HIT
+	b.hits = b.hits + 1
 }
 func (b Board) RecordMiss(p Point) {
 	b.points[p.X][p.Y] = MISS
+	b.misses = b.misses + 1
+}
+func (b Board) HasHitAllShips() bool {
+	return b.hits == b.totalShipPoints
 }
 func (b Board) AreEmptySpaces(ps []Point) bool {
 	for _, p := range ps {
