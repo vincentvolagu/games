@@ -4,36 +4,53 @@ import "fmt"
 import "math"
 
 func main() {
-	fmt.Println("vim-go")
 	n := 16
-	list := naturalOrderedList(n)
-	sn := squareNumbers(n)
-	fmt.Println("list is ", list)
-	fmt.Println("square numbers can be ", sn)
-	pairMap := make(map[int][]squarePair)
-	for _, v := range list {
-		pairMap[v] = findSquarePairs(v, list)
-	}
-	fmt.Println("map: ")
-	for _, v := range pairMap {
-		fmt.Println(v)
-	}
+	// for n := 16; n < 40; n++ {
+	// list := naturalOrderedList(n)
+	// sn := squareNumbers(n)
+	// fmt.Println("list is ", list)
+	// fmt.Println("square numbers can be ", sn)
+	graph := newSquareNumberGraph(n, true)
+	graph.initVertexes()
+	graph.initPaths()
+	fmt.Println("total recorded path", len(graph.paths))
+	// fullPaths := graph.findFullLengthPath()
+	// for _, v := range fullPaths {
+	// fmt.Println("found path", v)
+	// }
+	// if we plot those nodes on a x-y plane
+	// then they all sit on diagnol lines where x+y=sq
+	// eg. x+y=4, x+y=9 ...
+	// TODO: figure out the formula f(n) = # of possible vertex
+	//
+	// normally with n vertex, we have have n(n-1)/2 ~ O(n^2) edges
+	// TODO: figure out the formula to possible # of edges
+	// totalNodes := 0
+	// for _, v := range graph {
+	// totalNodes = totalNodes + len(v)
+	// }
+	// fmt.Println(n, "numbers has total of", totalNodes, "nodes")
+	// }
 
-	// navigate the graph until we can cover all points
+	// searchGraph(graph, n)
+}
 
-	for _, row := range pairMap {
+// navigate the graph until we can cover all points
+func searchGraph(graph map[int][]squarePoint, n int) {
+	for _, row := range graph {
 		for _, col := range row {
+			// this has some repetition as it discover the same paths repeately
 			path := newPath()
 			path.add(col.source)
-			if depthFirstSearch(pairMap, col, path, n) {
+			if depthFirstSearch(graph, col, path, n) {
 				fmt.Println("found path", path.nodes)
-				break
+				return
 			}
 		}
 	}
 }
 
-func depthFirstSearch(graph map[int][]squarePair, p squarePair, currentPath *path, depth int) bool {
+func depthFirstSearch(graph map[int][]squarePoint, p squarePoint, currentPath *path, depth int) bool {
 	edges, _ := graph[p.dest]
 	if !currentPath.add(p.dest) {
 		return false
@@ -59,19 +76,34 @@ func depthFirstSearch(graph map[int][]squarePair, p squarePair, currentPath *pat
 }
 
 type path struct {
-	nodes   []int
-	visited map[int]int
+	nodes []int
 }
 
 func newPath() *path {
-	return &path{visited: make(map[int]int)}
+	return &path{}
+}
+
+func (p *path) clone() *path {
+	dest := make([]int, len(p.nodes))
+	copy(dest, p.nodes)
+	return &path{
+		nodes: dest,
+	}
+}
+
+func (p *path) has(next int) bool {
+	for _, v := range p.nodes {
+		if next == v {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *path) add(next int) bool {
 	// avoid acyclic path
-	if _, ok := p.visited[next]; !ok {
+	if !p.has(next) {
 		p.nodes = append(p.nodes, next)
-		p.visited[next] = len(p.nodes) - 1
 		return true
 	}
 	return false
@@ -79,7 +111,6 @@ func (p *path) add(next int) bool {
 
 func (p *path) remove(prev int) {
 	p.nodes = p.nodes[:len(p.nodes)-1]
-	delete(p.visited, prev)
 }
 
 func (p path) len() int {
@@ -90,29 +121,96 @@ func (p path) asString() string {
 	return fmt.Sprint(p.nodes)
 }
 
-type squarePair struct {
+type squarePoint struct {
 	source, dest int
 }
 
-func (p squarePair) connects(other squarePair) bool {
+func (p squarePoint) connects(other squarePoint) bool {
 	return p.source == other.dest && p.dest == other.source
 }
-func (p squarePair) asKey() string {
+func (p squarePoint) asKey() string {
 	return fmt.Sprint(p.source, "_", p.dest)
 }
 
-func findSquarePairs(n int, list []int) []squarePair {
-	var pairs []squarePair
+type squareNumberGraph struct {
+	n int
+	// map of possible vertex at x
+	// 1 -> [8, 3, ...]
+	vertexMap map[int][]int
+	// edges that already been traversed / linked
+	paths []*path
+	debug bool
+}
+
+func newSquareNumberGraph(n int, debug bool) squareNumberGraph {
+	return squareNumberGraph{
+		n:         n,
+		vertexMap: make(map[int][]int),
+		debug:     debug,
+	}
+}
+
+// Runs in O(n^2)
+// TODO: can this be improved ?
+func (g *squareNumberGraph) initVertexes() {
+	list := naturalOrderedList(g.n)
+	for _, v := range list {
+		g.vertexMap[v] = g.findSquarePoints(v, list)
+	}
+}
+func (g *squareNumberGraph) findSquarePoints(n int, list []int) []int {
+	var points []int
 	for _, v := range list {
 		if v == n {
 			continue
 		}
 		if isSquareNumber(float64(n + v)) {
-			pairs = append(pairs, squarePair{n, v})
+			points = append(points, v)
 		}
 	}
-	return pairs
+	return points
 }
+
+func (g *squareNumberGraph) findFullLengthPath() []*path {
+	var fullPath []*path
+	for _, path := range g.paths {
+		if path.len() == g.n {
+			fullPath = append(fullPath, path)
+		}
+	}
+	return fullPath
+}
+
+func (g *squareNumberGraph) initPaths() {
+	for k, list := range g.vertexMap {
+		path := newPath()
+		path.add(k)
+		for _, v := range list {
+			g.nextDepth(v, path.clone())
+		}
+	}
+}
+
+func (g *squareNumberGraph) nextDepth(source int, path *path) {
+	// got cyclic path, the path ends there, record it
+	if !path.add(source) {
+		if g.debug {
+			fmt.Println("found path end", path)
+		}
+		g.paths = append(g.paths, path)
+		return
+	}
+
+	// fmt.Println("continue path search", path)
+	for _, dest := range g.vertexMap[source] {
+		if g.debug {
+			fmt.Println("looking path", path, "next", dest)
+		}
+		g.nextDepth(dest, path.clone())
+	}
+}
+
+// Runs in O(n)
 
 func naturalOrderedList(n int) []int {
 	list := make([]int, n)
