@@ -3,21 +3,27 @@ package main
 import "fmt"
 import "math"
 
+// Problem: for 1, 2, 3...n integer sequence, find a particular ordering that the sum of any 2 adjacent numbers are square number
+//
+// Thought: if we take a graph approach, this is to find the longest path of the graph
+// TODO: plot the tuple on a x-y plane shows special navigation pattern, that may help improve performance
+
 func main() {
-	n := 16
+	n := 23
 	// for n := 16; n < 40; n++ {
 	// list := naturalOrderedList(n)
 	// sn := squareNumbers(n)
 	// fmt.Println("list is ", list)
 	// fmt.Println("square numbers can be ", sn)
-	graph := newSquareNumberGraph(n, true)
+	graph := newSquareNumberGraph(n, false)
 	graph.initVertexes()
 	graph.initPaths()
+	fmt.Println("total vertex", graph.vertexCount())
 	fmt.Println("total recorded path", len(graph.paths))
-	// fullPaths := graph.findFullLengthPath()
-	// for _, v := range fullPaths {
-	// fmt.Println("found path", v)
-	// }
+	fullPaths := graph.findFullLengthPath()
+	for _, v := range fullPaths {
+		fmt.Println("found path", v)
+	}
 	// if we plot those nodes on a x-y plane
 	// then they all sit on diagnol lines where x+y=sq
 	// eg. x+y=4, x+y=9 ...
@@ -83,12 +89,24 @@ func newPath() *path {
 	return &path{}
 }
 
+func (p *path) tailPath() *path {
+	dest := make([]int, len(p.nodes)-1)
+	copy(dest, p.nodes[1:])
+	return &path{
+		nodes: dest,
+	}
+}
+
 func (p *path) clone() *path {
 	dest := make([]int, len(p.nodes))
 	copy(dest, p.nodes)
 	return &path{
 		nodes: dest,
 	}
+}
+
+func (p *path) head() int {
+	return p.nodes[0]
 }
 
 func (p *path) has(next int) bool {
@@ -102,11 +120,28 @@ func (p *path) has(next int) bool {
 
 func (p *path) add(next int) bool {
 	// avoid acyclic path
-	if !p.has(next) {
-		p.nodes = append(p.nodes, next)
-		return true
+	if p.has(next) {
+		return false
+	}
+	p.nodes = append(p.nodes, next)
+	return true
+}
+
+func (p *path) hasOverlap(another *path) bool {
+	for _, v := range another.nodes {
+		if p.has(v) {
+			return true
+		}
 	}
 	return false
+}
+
+func (p *path) merge(tail *path) {
+	for _, v := range tail.nodes {
+		if !p.add(v) {
+			break
+		}
+	}
 }
 
 func (p *path) remove(prev int) {
@@ -138,15 +173,17 @@ type squareNumberGraph struct {
 	// 1 -> [8, 3, ...]
 	vertexMap map[int][]int
 	// edges that already been traversed / linked
-	paths []*path
-	debug bool
+	paths        []*path
+	longestPaths map[int]*path
+	debug        bool
 }
 
 func newSquareNumberGraph(n int, debug bool) squareNumberGraph {
 	return squareNumberGraph{
-		n:         n,
-		vertexMap: make(map[int][]int),
-		debug:     debug,
+		n:            n,
+		vertexMap:    make(map[int][]int),
+		longestPaths: make(map[int]*path),
+		debug:        debug,
 	}
 }
 
@@ -170,6 +207,13 @@ func (g *squareNumberGraph) findSquarePoints(n int, list []int) []int {
 	}
 	return points
 }
+func (g *squareNumberGraph) vertexCount() int {
+	sum := 0
+	for _, v := range g.vertexMap {
+		sum = sum + len(v)
+	}
+	return sum
+}
 
 func (g *squareNumberGraph) findFullLengthPath() []*path {
 	var fullPath []*path
@@ -191,22 +235,20 @@ func (g *squareNumberGraph) initPaths() {
 	}
 }
 
-func (g *squareNumberGraph) nextDepth(source int, path *path) {
+func (g *squareNumberGraph) nextDepth(source int, currentPath *path) {
 	// got cyclic path, the path ends there, record it
-	if !path.add(source) {
-		if g.debug {
-			fmt.Println("found path end", path)
-		}
-		g.paths = append(g.paths, path)
+	if !currentPath.add(source) {
+		fmt.Println("found path end", currentPath)
+		g.paths = append(g.paths, currentPath)
 		return
 	}
 
 	// fmt.Println("continue path search", path)
 	for _, dest := range g.vertexMap[source] {
 		if g.debug {
-			fmt.Println("looking path", path, "next", dest)
+			fmt.Println("looking path", currentPath, "next", dest)
 		}
-		g.nextDepth(dest, path.clone())
+		g.nextDepth(dest, currentPath.clone())
 	}
 }
 
