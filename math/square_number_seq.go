@@ -236,28 +236,36 @@ func (g *squareNumberGraph) findFullLengthPath() []string {
 // TODO: find a way to improve this
 // - just throw goroutines at it to increase parallelism
 func (g *squareNumberGraph) initPaths() {
-	chs := make([]chan *path, len(g.vertexMap))
-	i := 0
+	ch := make(chan *path, 100)
+	done := make(chan int, len(g.vertexMap))
 	for k, list := range g.vertexMap {
-		ch := make(chan *path, 100)
-		chs[i] = ch
-		i++
 		path := newPath()
 		path.add(k)
-		go g.findPathsFrom(list, path, ch)
+		go g.findPathsFrom(list, path, ch, done)
 	}
-	for _, ch := range chs {
-		for v := range ch {
-			g.paths[v.asString()] = v
+
+	doneCount := 0
+	for {
+		select {
+		case v := <-ch:
+			if v.len() == g.n {
+				g.paths[v.asString()] = v
+			}
+
+		case <-done:
+			doneCount++
+			if doneCount == g.n {
+				return
+			}
 		}
 	}
 }
 
-func (g *squareNumberGraph) findPathsFrom(adjacentPoints []int, currentPath *path, ch chan *path) {
+func (g *squareNumberGraph) findPathsFrom(adjacentPoints []int, currentPath *path, ch chan *path, done chan int) {
 	for _, v := range adjacentPoints {
 		g.nextDepth(v, currentPath.clone(), ch)
 	}
-	close(ch)
+	done <- 1
 }
 
 func (g *squareNumberGraph) nextDepth(source int, currentPath *path, ch chan *path) {
