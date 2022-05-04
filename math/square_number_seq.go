@@ -6,7 +6,7 @@ import "sort"
 
 // Problem: for 1, 2, 3...n integer sequence, find a particular ordering that the sum of any 2 adjacent numbers are square number
 //
-// Thought: if we take a graph approach, this is to find the longest path of the graph
+// Thought: if we take a graph approach, this is to find the longest path of the graph that connects all vertexes
 // TODO: plot the tuple on a x-y plane shows special navigation pattern, that may help improve performance
 
 func main() {
@@ -178,10 +178,8 @@ type squareNumberGraph struct {
 	// map of adjacent edge from vertex x
 	// 1 -> [8, 3, ...]
 	vertexMap map[int][]int
-
 	// edges that already been traversed / linked
-	paths   map[string]*path
-	pathMap map[int][]*path
+	paths map[string]*path
 
 	debug         bool
 	nodeTraversed int
@@ -192,7 +190,6 @@ func newSquareNumberGraph(n int, debug bool) squareNumberGraph {
 		n:         n,
 		vertexMap: make(map[int][]int),
 		paths:     make(map[string]*path),
-		pathMap:   make(map[int][]*path),
 		debug:     debug,
 	}
 }
@@ -235,45 +232,42 @@ func (g *squareNumberGraph) findFullLengthPath() []string {
 	return fullPath
 }
 
+// This seems to be in some from of O(n!), which is really bad
+// TODO: find a way to improve this
+// - just throw goroutines at it to increase parallelism
 func (g *squareNumberGraph) initPaths() {
+	chs := make([]chan *path, len(g.vertexMap))
+	i := 0
 	for k, list := range g.vertexMap {
+		ch := make(chan *path, 100)
+		chs[i] = ch
+		i++
 		path := newPath()
 		path.add(k)
-		// fmt.Println("from top level", k)
-		for _, v := range list {
-			g.nextDepth(v, path.clone())
+		go g.findPathsFrom(list, path, ch)
+	}
+	for _, ch := range chs {
+		for v := range ch {
+			g.paths[v.asString()] = v
 		}
 	}
 }
 
-func (g *squareNumberGraph) nextDepth(source int, currentPath *path) {
+func (g *squareNumberGraph) findPathsFrom(adjacentPoints []int, currentPath *path, ch chan *path) {
+	for _, v := range adjacentPoints {
+		g.nextDepth(v, currentPath.clone(), ch)
+	}
+	close(ch)
+}
+
+func (g *squareNumberGraph) nextDepth(source int, currentPath *path, ch chan *path) {
 	g.nodeTraversed++
-
-	// use a cached path that's not overlap with the current path
-	hitCache := false
-	for _, cachedPath := range g.pathMap[source] {
-		if currentPath.hasOverlap(cachedPath) {
-			// fmt.Println("current path has overlap with cached path", currentPath, "cached path", cachedPath)
-			continue
-		}
-		// fmt.Println("hit cached; merge", currentPath, cachedPath)
-		mergedPath := currentPath.clone()
-		mergedPath.merge(cachedPath)
-		g.paths[string(mergedPath.head())] = mergedPath
-		g.pathMap[mergedPath.head()] = append(g.pathMap[mergedPath.head()], mergedPath)
-		hitCache = true
-	}
-
-	if hitCache {
-		return
-	}
 
 	// got cyclic path, the path ends there, record it
 	if !currentPath.add(source) {
 		// fmt.Println("found path end", currentPath)
-		g.paths[currentPath.asString()] = currentPath
-		// g.pathMap[currentPath.head()] = append(g.pathMap[currentPath.head()], currentPath)
-		// fmt.Println("cache path for", currentPath.head(), currentPath)
+		// g.paths[currentPath.asString()] = currentPath
+		ch <- currentPath
 		return
 	}
 
@@ -281,7 +275,7 @@ func (g *squareNumberGraph) nextDepth(source int, currentPath *path) {
 		if g.debug {
 			fmt.Println("looking path", currentPath, "next", dest)
 		}
-		g.nextDepth(dest, currentPath.clone())
+		g.nextDepth(dest, currentPath.clone(), ch)
 	}
 }
 
