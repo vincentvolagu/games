@@ -2,6 +2,7 @@ package main
 
 import "fmt"
 import "math"
+import "sort"
 
 // Problem: for 1, 2, 3...n integer sequence, find a particular ordering that the sum of any 2 adjacent numbers are square number
 //
@@ -9,7 +10,7 @@ import "math"
 // TODO: plot the tuple on a x-y plane shows special navigation pattern, that may help improve performance
 
 func main() {
-	n := 23
+	n := 32
 	// for n := 16; n < 40; n++ {
 	// list := naturalOrderedList(n)
 	// sn := squareNumbers(n)
@@ -18,9 +19,13 @@ func main() {
 	graph := newSquareNumberGraph(n, false)
 	graph.initVertexes()
 	graph.initPaths()
+	fmt.Println("n =", n)
 	fmt.Println("total vertex", graph.vertexCount())
 	fmt.Println("total recorded path", len(graph.paths))
+	fmt.Println("total node traversed", graph.nodeTraversed)
 	fullPaths := graph.findFullLengthPath()
+	fmt.Println("total full path found", len(fullPaths))
+	sort.Strings(fullPaths)
 	for _, v := range fullPaths {
 		fmt.Println("found path", v)
 	}
@@ -169,21 +174,26 @@ func (p squarePoint) asKey() string {
 
 type squareNumberGraph struct {
 	n int
-	// map of possible vertex at x
+
+	// map of adjacent edge from vertex x
 	// 1 -> [8, 3, ...]
 	vertexMap map[int][]int
+
 	// edges that already been traversed / linked
-	paths        []*path
-	longestPaths map[int]*path
-	debug        bool
+	paths   map[string]*path
+	pathMap map[int][]*path
+
+	debug         bool
+	nodeTraversed int
 }
 
 func newSquareNumberGraph(n int, debug bool) squareNumberGraph {
 	return squareNumberGraph{
-		n:            n,
-		vertexMap:    make(map[int][]int),
-		longestPaths: make(map[int]*path),
-		debug:        debug,
+		n:         n,
+		vertexMap: make(map[int][]int),
+		paths:     make(map[string]*path),
+		pathMap:   make(map[int][]*path),
+		debug:     debug,
 	}
 }
 
@@ -215,11 +225,11 @@ func (g *squareNumberGraph) vertexCount() int {
 	return sum
 }
 
-func (g *squareNumberGraph) findFullLengthPath() []*path {
-	var fullPath []*path
+func (g *squareNumberGraph) findFullLengthPath() []string {
+	var fullPath []string
 	for _, path := range g.paths {
 		if path.len() == g.n {
-			fullPath = append(fullPath, path)
+			fullPath = append(fullPath, path.asString())
 		}
 	}
 	return fullPath
@@ -229,6 +239,7 @@ func (g *squareNumberGraph) initPaths() {
 	for k, list := range g.vertexMap {
 		path := newPath()
 		path.add(k)
+		// fmt.Println("from top level", k)
 		for _, v := range list {
 			g.nextDepth(v, path.clone())
 		}
@@ -236,14 +247,36 @@ func (g *squareNumberGraph) initPaths() {
 }
 
 func (g *squareNumberGraph) nextDepth(source int, currentPath *path) {
-	// got cyclic path, the path ends there, record it
-	if !currentPath.add(source) {
-		fmt.Println("found path end", currentPath)
-		g.paths = append(g.paths, currentPath)
+	g.nodeTraversed++
+
+	// use a cached path that's not overlap with the current path
+	hitCache := false
+	for _, cachedPath := range g.pathMap[source] {
+		if currentPath.hasOverlap(cachedPath) {
+			// fmt.Println("current path has overlap with cached path", currentPath, "cached path", cachedPath)
+			continue
+		}
+		// fmt.Println("hit cached; merge", currentPath, cachedPath)
+		mergedPath := currentPath.clone()
+		mergedPath.merge(cachedPath)
+		g.paths[string(mergedPath.head())] = mergedPath
+		g.pathMap[mergedPath.head()] = append(g.pathMap[mergedPath.head()], mergedPath)
+		hitCache = true
+	}
+
+	if hitCache {
 		return
 	}
 
-	// fmt.Println("continue path search", path)
+	// got cyclic path, the path ends there, record it
+	if !currentPath.add(source) {
+		// fmt.Println("found path end", currentPath)
+		g.paths[currentPath.asString()] = currentPath
+		// g.pathMap[currentPath.head()] = append(g.pathMap[currentPath.head()], currentPath)
+		// fmt.Println("cache path for", currentPath.head(), currentPath)
+		return
+	}
+
 	for _, dest := range g.vertexMap[source] {
 		if g.debug {
 			fmt.Println("looking path", currentPath, "next", dest)
