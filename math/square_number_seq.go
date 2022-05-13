@@ -13,7 +13,6 @@ func main() {
 	n := 32
 	// for n := 16; n < 40; n++ {
 	// list := naturalOrderedList(n)
-	// sn := squareNumbers(n)
 	// fmt.Println("list is ", list)
 	// fmt.Println("square numbers can be ", sn)
 	graph := newSquareNumberGraph(n, false)
@@ -23,11 +22,14 @@ func main() {
 	fmt.Println("total vertex", graph.vertexCount())
 	fmt.Println("total recorded path", len(graph.paths))
 	fmt.Println("total node traversed", graph.nodeTraversed)
-	fullPaths := graph.findFullLengthPath()
+	fullPaths, runningSums := graph.findFullLengthPath()
 	fmt.Println("total full path found", len(fullPaths))
 	sort.Strings(fullPaths)
-	for _, v := range fullPaths {
-		fmt.Println("found path", v)
+	// for _, v := range fullPaths {
+	// fmt.Println("found path", v)
+	// }
+	for _, v := range runningSums {
+		fmt.Println("running sum", v)
 	}
 	// if we plot those nodes on a x-y plane
 	// then they all sit on diagnol lines where x+y=sq
@@ -157,6 +159,14 @@ func (p path) len() int {
 	return len(p.nodes)
 }
 
+func (p path) runningSum() string {
+	sum := make([]int, p.len()-1)
+	for i := 1; i < p.len(); i++ {
+		sum[i-1] = p.nodes[i] + p.nodes[i-1]
+	}
+	return fmt.Sprint(sum)
+}
+
 func (p path) asString() string {
 	return fmt.Sprint(p.nodes)
 }
@@ -222,14 +232,16 @@ func (g *squareNumberGraph) vertexCount() int {
 	return sum
 }
 
-func (g *squareNumberGraph) findFullLengthPath() []string {
+func (g *squareNumberGraph) findFullLengthPath() ([]string, []string) {
 	var fullPath []string
+	var runningSum []string
 	for _, path := range g.paths {
 		if path.len() == g.n {
 			fullPath = append(fullPath, path.asString())
+			runningSum = append(runningSum, path.runningSum())
 		}
 	}
-	return fullPath
+	return fullPath, runningSum
 }
 
 // This seems to be in some from of O(n!), which is really bad
@@ -297,7 +309,7 @@ func naturalOrderedList(n int) []int {
 	return list
 }
 
-func squareNumbers(n int) []int {
+func getSquareNumbersUpTo(n int) []int {
 	maxSum := n + n - 1
 	var squareNums []int
 	for i := 1; i <= maxSum; i++ {
