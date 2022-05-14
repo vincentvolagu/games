@@ -111,13 +111,16 @@ func (g *squareNumberGraph) SquareSumSort(n int) [][]int {
 }
 
 // Runs in O(n^2)
-// TODO: can this be improved ?
 func (g *squareNumberGraph) initVertexes() {
-	list := naturalOrderedList(g.n)
+	list := make([]int, g.n)
+	for i := 1; i <= n; i++ {
+		list[i-1] = i
+	}
 	for _, v := range list {
 		g.vertexMap[v] = g.findSquarePoints(v, list)
 	}
 }
+
 func (g *squareNumberGraph) findSquarePoints(n int, list []int) []int {
 	var points []int
 	for _, v := range list {
