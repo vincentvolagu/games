@@ -1,11 +1,11 @@
 package main
 
 import "fmt"
-import "math"
 
 // Problem: for 1, 2, 3...n integer sequence, find a particular ordering that the sum of any 2 adjacent numbers are square number
 //
 // Thought: if we take a graph approach, this is to find the longest path of the graph that connects all vertexes
+// maybe it's a NP-hard problem https://en.wikipedia.org/wiki/Longest_path_problem
 // TODO: plot the tuple on a x-y plane shows special navigation pattern, that may help improve performance
 
 type SquareSumSorter interface {
@@ -14,8 +14,10 @@ type SquareSumSorter interface {
 
 func main() {
 	n := 16
-	graph := NewSquareNumberGraph(n, false)
-	squareInts := graph.SquareSumSort(n)
+	// graph := NewSquareNumberGraph(n, false)
+	// squareInts := graph.SquareSumSort(n)
+	r := Random{}
+	squareInts := r.SquareSumSort(n)
 	for _, v := range squareInts {
 		fmt.Println(v)
 	}
@@ -27,15 +29,4 @@ func main() {
 	//
 	// normally with n vertex, we have have n(n-1)/2 ~ O(n^2) edges
 	// TODO: figure out the formula to possible # of edges
-}
-
-func getSquareNumbersUpTo(n int) []int {
-	maxSum := n + n - 1
-	var squareNums []int
-	for i := 1; i <= maxSum; i++ {
-		if isSquareNumber(float64(i)) {
-			squareNums = append(squareNums, i)
-		}
-	}
-	return squareNums
 }

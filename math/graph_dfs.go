@@ -72,6 +72,7 @@ type squareNumberGraph struct {
 	// map of adjacent edge from vertex x
 	// 1 -> [8, 3, ...]
 	vertexMap map[int][]int
+
 	// edges that already been traversed / linked
 	paths map[string]*path
 
@@ -113,7 +114,7 @@ func (g *squareNumberGraph) SquareSumSort(n int) [][]int {
 // Runs in O(n^2)
 func (g *squareNumberGraph) initVertexes() {
 	list := make([]int, g.n)
-	for i := 1; i <= n; i++ {
+	for i := 1; i <= g.n; i++ {
 		list[i-1] = i
 	}
 	for _, v := range list {
