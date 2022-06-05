@@ -13,10 +13,10 @@ type SquareSumSorter interface {
 }
 
 func main() {
-	n := 16
+	n := 32
 	// graph := NewSquareNumberGraph(n, false)
 	// squareInts := graph.SquareSumSort(n)
-	r := Random{}
+	r := NewSquareNumberGraph(n, false)
 	squareInts := r.SquareSumSort(n)
 	for _, v := range squareInts {
 		fmt.Println(v)

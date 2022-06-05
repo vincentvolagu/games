@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -52,8 +53,6 @@ type Board struct {
 	points [][]string
 
 	totalShipPoints int
-	hits            int
-	misses          int
 }
 
 func (b *Board) getSize() int {
@@ -68,13 +67,6 @@ func (b *Board) Init(size int) {
 		for j := 0; j < size; j++ {
 			b.points[i][j] = EMPTY_SPACE
 		}
-	}
-}
-
-func (b *Board) SetShips(ships []Ship) {
-	b.totalShipPoints = 0
-	for _, ship := range ships {
-		b.totalShipPoints = b.totalShipPoints + ship.length
 	}
 }
 
@@ -94,7 +86,12 @@ func (b Board) columnHeading() []string {
 	return []string{" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
 }
 func (b Board) Print() {
+	for _, v := range b.columnHeading() {
+		fmt.Print(v)
+	}
+	fmt.Println()
 	for i := 0; i < b.size; i++ {
+		fmt.Print(i)
 		for j := 0; j < b.size; j++ {
 			fmt.Print(b.points[i][j])
 		}
@@ -107,7 +104,7 @@ func (b Board) PrintForHumanPlayer() {
 	}
 	fmt.Println()
 	for i := 0; i < b.size; i++ {
-		fmt.Print(i + 1)
+		fmt.Print(i)
 		for j := 0; j < b.size; j++ {
 			if b.IsFloatingShip(Point{i, j}) {
 				fmt.Print(EMPTY_SPACE)
@@ -119,20 +116,15 @@ func (b Board) PrintForHumanPlayer() {
 	}
 }
 func (b Board) TransformHumanPointInput(row int, col string) Point {
-	rowIndex := row - 1
+	rowIndex := row
 	colIndex := -1
 	for i, v := range b.columnHeading() {
-		if v == col {
+		if v == strings.ToUpper(col) {
 			colIndex = i - 1 // there's an empty left padding
 		}
 	}
 
 	return Point{rowIndex, colIndex}
-}
-func (b Board) TransformPointForHuman(point Point) (row int, col string) {
-	row = point.X + 1
-	col = b.columnHeading()[point.Y+1]
-	return row, col
 }
 
 func (b Board) IsGameOver() bool {
@@ -176,23 +168,18 @@ func (b Board) Hit(p Point) bool {
 	if b.IsOutOfBound(p) {
 		return false
 	}
-	if b.IsEmptySpace(p) {
-		b.points[p.X][p.Y] = MISS
-		return false
+	if b.IsFloatingShip(p) {
+		b.points[p.X][p.Y] = HIT
+		return true
 	}
-	b.points[p.X][p.Y] = HIT
-	return true
+	b.points[p.X][p.Y] = MISS
+	return false
 }
 func (b Board) RecordHit(p Point) {
 	b.points[p.X][p.Y] = HIT
-	b.hits = b.hits + 1
 }
 func (b Board) RecordMiss(p Point) {
 	b.points[p.X][p.Y] = MISS
-	b.misses = b.misses + 1
-}
-func (b Board) HasHitAllShips() bool {
-	return b.hits == b.totalShipPoints
 }
 func (b Board) AreEmptySpaces(ps []Point) bool {
 	for _, p := range ps {
