@@ -8,18 +8,29 @@ type Gunner interface {
 	Miss(p Point)
 }
 
+type GunnerFactory interface {
+	MakeGunner(board *Board, shipSizes []int) Gunner
+}
+
+type LukcyGunnerFactory struct{}
+
+func (f LukcyGunnerFactory) MakeGunner(board *Board, shipSizes []int) Gunner {
+	return NewLukcyGunner(board)
+}
+
+func NewLukcyGunner(board *Board) Gunner {
+	return &randomGunner{
+		board,
+		Points{},
+	}
+}
+
 // randomGunner hits random targets without any memory of hit/miss history
 type randomGunner struct {
 	board        *Board
 	triedTargets Points
 }
 
-func NewRandomGunner(board *Board) Gunner {
-	return &randomGunner{
-		board,
-		Points{},
-	}
-}
 func (g *randomGunner) Target() Point {
 	var p Point
 	for {
@@ -35,6 +46,12 @@ func (g *randomGunner) Hit(p Point) {
 }
 func (g *randomGunner) Miss(p Point) {
 	g.triedTargets = g.triedTargets.Add(p)
+}
+
+type LinearGunnerFactory struct{}
+
+func (f LinearGunnerFactory) MakeGunner(board *Board, shipSizes []int) Gunner {
+	return NewLinearGunner(board)
 }
 
 // linearGunner hits targets by linear scanning (left to right, top to bottom)
@@ -74,6 +91,11 @@ type diagonalGunner struct {
 	triedIndex int
 }
 
+type DiagonalGunnerFactory struct{}
+
+func (f DiagonalGunnerFactory) MakeGunner(board *Board, shipSizes []int) Gunner {
+	return NewDiagonalGunner(board, shipSizes)
+}
 func NewDiagonalGunner(board *Board, shipSizes []int) *diagonalGunner {
 	g := &diagonalGunner{
 		board,
@@ -125,6 +147,12 @@ type ClusterGunner struct {
 	candidates        []Point
 	defaultCandidates []Point
 	triedIndex        int
+}
+
+type ClusterGunnerFactory struct{}
+
+func (f ClusterGunnerFactory) MakeGunner(board *Board, shipSizes []int) Gunner {
+	return NewClusterGunner(board, shipSizes)
 }
 
 func NewClusterGunner(board *Board, shipSizes []int) Gunner {

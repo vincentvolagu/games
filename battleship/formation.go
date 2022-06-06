@@ -16,7 +16,7 @@ type RandomCoordinator struct {
 func MakeRandomCoordinator() ShipCoordinator {
 	return RandomCoordinator{
 		[]ShipCoordinator{
-			RandomFormation{&randomLine{}},
+			LuckyDraw{&randomLine{}},
 			EdgeLover{},
 		},
 	}
@@ -75,15 +75,15 @@ func (f EdgeLover) initEdgePoints(boardSize int) [][]Point {
 	return ps
 }
 
-type RandomFormation struct {
+type LuckyDraw struct {
 	ln LineNavigator
 }
 
-func MakeRandomFormation() RandomFormation {
-	return RandomFormation{&randomLine{}}
+func MakeLuckyDraw() LuckyDraw {
+	return LuckyDraw{&randomLine{}}
 }
 
-func (f RandomFormation) PlaceShips(board *Board, ships []Ship) {
+func (f LuckyDraw) PlaceShips(board *Board, ships []Ship) {
 	var randPoint Point
 	var ps []Point
 	var err error
@@ -102,7 +102,7 @@ func (f RandomFormation) PlaceShips(board *Board, ships []Ship) {
 	}
 }
 
-func (f RandomFormation) placeShipAtPoint(board *Board, p Point, length int) ([]Point, error) {
+func (f LuckyDraw) placeShipAtPoint(board *Board, p Point, length int) ([]Point, error) {
 	ps := make([]Point, length)
 	for i := 0; i < length; i++ {
 		if !board.IsEmptySpace(p) {

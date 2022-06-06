@@ -11,26 +11,50 @@ func main() {
 		Ship{"C", 5},
 	}
 
-	playComputer(ships)
+	st := &stats{name: "lucky draw vs lucky gunner"}
+	playComputerPair(ships, MakeLuckyDraw(), LukcyGunnerFactory{}, st)
+	st.print()
+	st = &stats{name: "lucky draw vs linear gunner"}
+	playComputerPair(ships, MakeLuckyDraw(), LinearGunnerFactory{}, st)
+	st.print()
+	st = &stats{name: "lucky draw vs cluster gunner"}
+	playComputerPair(ships, MakeLuckyDraw(), ClusterGunnerFactory{}, st)
+	st.print()
 	// playHuman(ships)
 }
 
-func playComputer(ships []Ship) {
-	// formation := MakeRandomFormation()
-	formation := MakeRandomCoordinator()
-	summary := []int{}
-	for i := 0; i < 1; i++ {
+type stats struct {
+	name          string // name of the pair
+	numberOfGames int
+	totalSteps    int
+}
+
+func (s stats) avgSteps() int {
+	return s.totalSteps / s.numberOfGames
+}
+func (s stats) print() {
+	fmt.Println("Summary:", s.name)
+	fmt.Println("total number of games:", s.numberOfGames)
+	fmt.Println("total steps:", s.totalSteps)
+	fmt.Println("avg steps per game:", s.avgSteps(), "steps")
+	fmt.Println("=======================================")
+}
+
+func playComputerPair(
+	ships []Ship,
+	coordinator ShipCoordinator,
+	gunnerFactory GunnerFactory,
+	stats *stats,
+) {
+	for i := 0; i < 50; i++ {
 		board := &Board{}
 		board.Init(10)
-		formation.PlaceShips(board, ships)
+		coordinator.PlaceShips(board, ships)
 
-		board.Print()
+		// board.Print()
 
-		// fmt.Println("================================================")
-		gunner := NewClusterGunner(board, []int{5, 4, 3, 2})
-		// gunner := NewLinearGunner(board)
-		// gunner := NewDiagonalGunner(board, []int{5, 2})
-		// gunner := NewRandomGunner(board)
+		// TODO: extract the hard coded ship size slice here
+		gunner := gunnerFactory.MakeGunner(board, []int{5, 4, 3, 2})
 		steps := 0
 		for {
 			steps = steps + 1
@@ -49,25 +73,18 @@ func playComputer(ships []Ship) {
 				break
 			}
 		}
-		board.Print()
-		fmt.Println("takes", steps, "steps")
-		summary = append(summary, steps)
-		fmt.Println("================================================")
+		stats.numberOfGames = stats.numberOfGames + 1
+		stats.totalSteps += steps
+		// board.Print()
+		// fmt.Println("================================================")
 	}
-
-	sum := 0
-	for _, v := range summary {
-		sum = sum + v
-	}
-	avg := sum / len(summary)
-	fmt.Println("Summary: avg = ", avg, "steps")
 }
 
 func playHuman(ships []Ship) {
 	// initialise the computer board and place ships
 	computerBoard := &Board{}
 	computerBoard.Init(10)
-	formation := MakeRandomFormation()
+	formation := MakeLuckyDraw()
 	formation.PlaceShips(computerBoard, ships)
 	computerBoard.Print()
 	computerBoard.PrintForHumanPlayer()
