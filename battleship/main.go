@@ -11,12 +11,13 @@ func main() {
 		Ship{"C", 5},
 	}
 
-	playHuman(ships)
-	// playComputer(ships)
+	playComputer(ships)
+	// playHuman(ships)
 }
 
 func playComputer(ships []Ship) {
-	formation := MakeRandomFormation()
+	// formation := MakeRandomFormation()
+	formation := MakeRandomCoordinator()
 	summary := []int{}
 	for i := 0; i < 1; i++ {
 		board := &Board{}
@@ -138,10 +139,8 @@ func playHuman(ships []Ship) {
 
 		hit := humanBoard.Hit(target)
 		if hit {
-			humanBoard.RecordHit(target)
 			gunner.Hit(target)
 		} else {
-			humanBoard.RecordMiss(target)
 			gunner.Miss(target)
 		}
 		fmt.Println("============== Player's Board =============================")

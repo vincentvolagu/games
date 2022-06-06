@@ -13,7 +13,7 @@ type RandomCoordinator struct {
 	coordinators []ShipCoordinator
 }
 
-func makeRandomCoordinator() ShipCoordinator {
+func MakeRandomCoordinator() ShipCoordinator {
 	return RandomCoordinator{
 		[]ShipCoordinator{
 			RandomFormation{&randomLine{}},

@@ -51,8 +51,6 @@ type Ship struct {
 type Board struct {
 	size   int
 	points [][]string
-
-	totalShipPoints int
 }
 
 func (b *Board) getSize() int {
@@ -174,12 +172,6 @@ func (b Board) Hit(p Point) bool {
 	}
 	b.points[p.X][p.Y] = MISS
 	return false
-}
-func (b Board) RecordHit(p Point) {
-	b.points[p.X][p.Y] = HIT
-}
-func (b Board) RecordMiss(p Point) {
-	b.points[p.X][p.Y] = MISS
 }
 func (b Board) AreEmptySpaces(ps []Point) bool {
 	for _, p := range ps {
