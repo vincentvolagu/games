@@ -16,7 +16,7 @@ type RandomCoordinator struct {
 func MakeRandomCoordinator() ShipCoordinator {
 	return RandomCoordinator{
 		[]ShipCoordinator{
-			LuckyDraw{&randomLine{}},
+			LuckyDraw{MakeRandomLineNavigator()},
 			EdgeLover{},
 		},
 	}
@@ -87,7 +87,7 @@ type LuckyDraw struct {
 }
 
 func MakeLuckyDraw() LuckyDraw {
-	return LuckyDraw{&randomLine{}}
+	return LuckyDraw{MakeRandomLineNavigator()}
 }
 
 func (f LuckyDraw) PlaceShips(board *Board, ships []Ship) {
@@ -95,7 +95,7 @@ func (f LuckyDraw) PlaceShips(board *Board, ships []Ship) {
 	var ps []Point
 	var err error
 	for _, ship := range ships {
-		f.ln.Reset()
+		f.ln = f.ln.Alternate()
 		for {
 			randPoint = board.PickRandomPoint()
 			ps, err = f.placeShipAtPoint(board, randPoint, ship.length)
@@ -125,4 +125,76 @@ type NoSpaceForShipError struct{}
 
 func (e NoSpaceForShipError) Error() string {
 	return "no space for ship"
+}
+
+// ClusterArmada places ships in very tight formation so that they're next to each other
+// in a clustered fashion
+type ClusterArmada struct {
+	ln LineNavigator
+}
+
+func MakeClusterArmada() ClusterArmada {
+	return ClusterArmada{MakeRandomLineNavigator()}
+}
+
+func (f ClusterArmada) PlaceShips(board *Board, ships []Ship) {
+	// place the first ship as anchor
+	anchorShip := ships[0]
+	guardingShips := ships[1:]
+	var randPoint Point
+	var anchorPoints []Point
+	var err error
+	for {
+		randPoint = board.PickRandomPoint()
+		anchorPoints, err = f.placeShipAtPoint(board, randPoint, anchorShip.length)
+		if err == nil {
+			break
+		}
+	}
+	for _, p := range anchorPoints {
+		board.PlaceShipAt(p, anchorShip.name)
+	}
+
+	// place the rest of the ships around the anchor ship
+	neighbourNav := f.ln.Alternate()
+	anchorPoint := anchorPoints[0]
+	currentPoint := anchorPoint
+	var ps []Point
+	for _, ship := range guardingShips {
+		nextLine := neighbourNav.NextPoint(currentPoint)
+		if board.IsOutOfBound(nextLine) {
+			// reverse direction and look the other way
+			currentPoint = anchorPoint
+			neighbourNav = neighbourNav.Reverse()
+			continue
+		}
+		for {
+			randPoint = board.PickRandomPoint()
+			if neighbourNav.IsHorizontal() {
+				randPoint = Point{randPoint.X, nextLine.Y}
+			} else {
+				randPoint = Point{nextLine.X, randPoint.Y}
+			}
+			ps, err = f.placeShipAtPoint(board, randPoint, ship.length)
+			if err == nil {
+				currentPoint = randPoint
+				break
+			}
+		}
+		for _, p := range ps {
+			board.PlaceShipAt(p, ship.name)
+		}
+	}
+}
+
+func (f ClusterArmada) placeShipAtPoint(board *Board, p Point, length int) ([]Point, error) {
+	ps := make([]Point, length)
+	for i := 0; i < length; i++ {
+		if !board.IsEmptySpace(p) {
+			return []Point{}, NoSpaceForShipError{}
+		}
+		ps[i] = p
+		p = f.ln.NextPoint(p)
+	}
+	return ps, nil
 }

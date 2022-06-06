@@ -12,22 +12,25 @@ func main() {
 	}
 
 	st := &stats{name: "lucky draw vs lucky gunner"}
-	playComputerPair(ships, MakeLuckyDraw(), LukcyGunnerFactory{}, st)
-	st.print()
-	st = &stats{name: "lucky draw vs linear gunner"}
-	playComputerPair(ships, MakeLuckyDraw(), LinearGunnerFactory{}, st)
-	st.print()
-	st = &stats{name: "lucky draw vs cluster gunner"}
-	playComputerPair(ships, MakeLuckyDraw(), ClusterGunnerFactory{}, st)
-	st.print()
-	st = &stats{name: "edge lover vs lucky gunner"}
-	playComputerPair(ships, EdgeLover{}, LukcyGunnerFactory{}, st)
-	st.print()
-	st = &stats{name: "edge lover vs linear gunner"}
-	playComputerPair(ships, EdgeLover{}, LinearGunnerFactory{}, st)
-	st.print()
-	st = &stats{name: "edge lover vs cluster gunner"}
-	playComputerPair(ships, EdgeLover{}, ClusterGunnerFactory{}, st)
+	// playComputerPair(ships, MakeLuckyDraw(), LuckyGunnerFactory{}, st)
+	// st.print()
+	// st = &stats{name: "lucky draw vs linear gunner"}
+	// playComputerPair(ships, MakeLuckyDraw(), LinearGunnerFactory{}, st)
+	// st.print()
+	// st = &stats{name: "lucky draw vs cluster gunner"}
+	// playComputerPair(ships, MakeLuckyDraw(), ClusterGunnerFactory{}, st)
+	// st.print()
+	// st = &stats{name: "edge lover vs lucky gunner"}
+	// playComputerPair(ships, EdgeLover{}, LuckyGunnerFactory{}, st)
+	// st.print()
+	// st = &stats{name: "edge lover vs linear gunner"}
+	// playComputerPair(ships, EdgeLover{}, LinearGunnerFactory{}, st)
+	// st.print()
+	// st = &stats{name: "edge lover vs cluster gunner"}
+	// playComputerPair(ships, EdgeLover{}, ClusterGunnerFactory{}, st)
+	// st.print()
+	st = &stats{name: "cluster armada vs lucky gunner"}
+	playComputerPair(ships, MakeClusterArmada(), LuckyGunnerFactory{}, st)
 	st.print()
 	// playHuman(ships)
 }
@@ -60,7 +63,7 @@ func playComputerPair(
 		board.Init(10)
 		coordinator.PlaceShips(board, ships)
 
-		// board.Print()
+		board.Print()
 
 		// TODO: extract the hard coded ship size slice here
 		gunner := gunnerFactory.MakeGunner(board, []int{5, 4, 3, 2})

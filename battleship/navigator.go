@@ -6,44 +6,87 @@ import (
 )
 
 type LineNavigator interface {
-	Reset()
 	NextPoint(p Point) Point
+	Alternate() LineNavigator
+	Reverse() LineNavigator
+	IsHorizontal() bool
 }
 
-type horizontal struct {
+type goLeft struct {
 }
 
-func (f horizontal) NextPoint(p Point) Point {
+func (nav goLeft) NextPoint(p Point) Point {
+	return p.left()
+}
+func (nav goLeft) Alternate() LineNavigator {
+	return pickRandom([]LineNavigator{goDown{}, goUp{}})
+}
+func (nav goLeft) Reverse() LineNavigator {
+	return goRight{}
+}
+func (nav goLeft) IsHorizontal() bool {
+	return true
+}
+
+type goRight struct {
+}
+
+func (nav goRight) NextPoint(p Point) Point {
 	return p.right()
 }
-func (f horizontal) Reset() {
+func (nav goRight) Alternate() LineNavigator {
+	return pickRandom([]LineNavigator{goDown{}, goUp{}})
+}
+func (nav goRight) Reverse() LineNavigator {
+	return goLeft{}
+}
+func (nav goRight) IsHorizontal() bool {
+	return true
 }
 
-type vertical struct {
+type goUp struct {
 }
 
-func (f vertical) NextPoint(p Point) Point {
+func (nav goUp) NextPoint(p Point) Point {
+	return p.up()
+}
+func (nav goUp) Alternate() LineNavigator {
+	return pickRandom([]LineNavigator{goLeft{}, goRight{}})
+}
+func (nav goUp) Reverse() LineNavigator {
+	return goDown{}
+}
+func (nav goUp) IsHorizontal() bool {
+	return false
+}
+
+type goDown struct {
+}
+
+func (nav goDown) NextPoint(p Point) Point {
 	return p.down()
 }
-func (f vertical) Reset() {
+func (nav goDown) Alternate() LineNavigator {
+	return pickRandom([]LineNavigator{goLeft{}, goRight{}})
+}
+func (nav goDown) Reverse() LineNavigator {
+	return goUp{}
+}
+func (nav goDown) IsHorizontal() bool {
+	return false
 }
 
-type randomLine struct {
-	nav LineNavigator
-}
-
-func (f *randomLine) Reset() {
+func pickRandom(navs []LineNavigator) LineNavigator {
 	rand.Seed(time.Now().UnixNano())
-	randNum := rand.Intn(100) % 2
-	if randNum == 0 {
-		f.nav = horizontal{}
-	} else {
-		f.nav = vertical{}
-	}
+	return navs[rand.Intn(len(navs))]
 }
-func (f *randomLine) NextPoint(p Point) Point {
-	if f.nav == nil {
-		f.Reset()
+
+func MakeRandomLineNavigator() LineNavigator {
+	navs := []LineNavigator{
+		goRight{},
+		goDown{},
+		goLeft{},
+		goUp{},
 	}
-	return f.nav.NextPoint(p)
+	return pickRandom(navs)
 }

@@ -12,13 +12,13 @@ type GunnerFactory interface {
 	MakeGunner(board *Board, shipSizes []int) Gunner
 }
 
-type LukcyGunnerFactory struct{}
+type LuckyGunnerFactory struct{}
 
-func (f LukcyGunnerFactory) MakeGunner(board *Board, shipSizes []int) Gunner {
-	return NewLukcyGunner(board)
+func (f LuckyGunnerFactory) MakeGunner(board *Board, shipSizes []int) Gunner {
+	return NewLuckyGunner(board)
 }
 
-func NewLukcyGunner(board *Board) Gunner {
+func NewLuckyGunner(board *Board) Gunner {
 	return &randomGunner{
 		board,
 		Points{},
