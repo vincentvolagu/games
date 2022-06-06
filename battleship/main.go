@@ -4,11 +4,11 @@ import "fmt"
 
 func main() {
 	ships := []Ship{
-		Ship{"T", 2},
-		Ship{"D", 3},
-		Ship{"S", 3},
-		Ship{"B", 4},
 		Ship{"C", 5},
+		Ship{"B", 4},
+		Ship{"S", 3},
+		Ship{"D", 3},
+		Ship{"T", 2},
 	}
 
 	st := &stats{name: "lucky draw vs lucky gunner"}
@@ -19,6 +19,15 @@ func main() {
 	st.print()
 	st = &stats{name: "lucky draw vs cluster gunner"}
 	playComputerPair(ships, MakeLuckyDraw(), ClusterGunnerFactory{}, st)
+	st.print()
+	st = &stats{name: "edge lover vs lucky gunner"}
+	playComputerPair(ships, EdgeLover{}, LukcyGunnerFactory{}, st)
+	st.print()
+	st = &stats{name: "edge lover vs linear gunner"}
+	playComputerPair(ships, EdgeLover{}, LinearGunnerFactory{}, st)
+	st.print()
+	st = &stats{name: "edge lover vs cluster gunner"}
+	playComputerPair(ships, EdgeLover{}, ClusterGunnerFactory{}, st)
 	st.print()
 	// playHuman(ships)
 }
@@ -46,7 +55,7 @@ func playComputerPair(
 	gunnerFactory GunnerFactory,
 	stats *stats,
 ) {
-	for i := 0; i < 50; i++ {
+	for i := 0; i < 20; i++ {
 		board := &Board{}
 		board.Init(10)
 		coordinator.PlaceShips(board, ships)

@@ -32,11 +32,18 @@ type EdgeLover struct {
 }
 
 func (f EdgeLover) PlaceShips(board *Board, ships []Ship) {
-	rand.Seed(time.Now().UnixNano())
+	// there is a potential infinite loop here if we place the longest ship last
+	// because by then all 4 edges might have already been occupied by other shorter
+	// ships so none are left to fit the longest ship
+	// In order to avoid that:
+	// 1. mandate or sort the input ships by length and place the longer ones first
+	// 2. fallback to 2nd out most edges when the out most ones are all used up
+	// TODO: implement option 2 given that's more scalable
 	ps := f.initEdgePoints(board.getSize())
 	var shipPoints []Point
 	for _, ship := range ships {
 		for {
+			rand.Seed(time.Now().UnixNano())
 			randEdge := rand.Intn(4)
 			randIndex := rand.Intn(board.getSize() - ship.length)
 			shipPoints = ps[randEdge][randIndex : randIndex+ship.length]
