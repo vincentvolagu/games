@@ -138,6 +138,7 @@ func ComputerVsHuman(ships []Ship) {
 		humanBoard.Print()
 	}
 
+	fmt.Println("Now both boards are set, let's play")
 	for {
 		// take human player's next target
 		fmt.Println("================================================")

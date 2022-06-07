@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type Gunner interface {
 	Target() Point
 	Hit(p Point)
@@ -81,65 +79,6 @@ func (g *linearGunner) Hit(p Point) {
 func (g *linearGunner) Miss(p Point) {
 }
 
-// diagonalGunner take the strategry of targeting all points on a diagonal line
-// based on a certain ship size, dividing the entire grid into small boxes and
-// check points on the diagonal lines of each small box
-// this could be better than linear scanning or picking completely random points
-type diagonalGunner struct {
-	board      *Board
-	candidates []Point
-	triedIndex int
-}
-
-type DiagonalGunnerFactory struct{}
-
-func (f DiagonalGunnerFactory) MakeGunner(board *Board, shipSizes []int) Gunner {
-	return NewDiagonalGunner(board, shipSizes)
-}
-func NewDiagonalGunner(board *Board, shipSizes []int) *diagonalGunner {
-	g := &diagonalGunner{
-		board,
-		[]Point{},
-		0,
-	}
-	g.markCandidates(shipSizes)
-
-	return g
-}
-
-func (g *diagonalGunner) markCandidates(shipSizes []int) {
-	// ASSUME the ship sizes are already sorted in descending order without duplicates
-	for _, shipSize := range shipSizes {
-		for row := 0; row < g.board.getSize(); row++ {
-			repetition := g.board.getSize() / shipSize
-			for i := 1; i <= repetition; i++ {
-				col := shipSize*i - 1 - (row % shipSize)
-				g.candidates = append(g.candidates, Point{row, col})
-			}
-		}
-	}
-}
-func (g *diagonalGunner) print() {
-	for _, v := range g.candidates {
-		fmt.Println(v)
-	}
-}
-func (g *diagonalGunner) Target() Point {
-	// go through all candidates if any remains
-	var p Point
-	if g.triedIndex < len(g.candidates) {
-		p = g.candidates[g.triedIndex]
-		g.triedIndex++
-		return p
-	}
-
-	return Point{-1, -1}
-}
-func (g *diagonalGunner) Hit(p Point) {
-}
-func (g *diagonalGunner) Miss(p Point) {
-}
-
 // ClusterGunner take the strategry of targeting all the adjacent points to the last hit
 type ClusterGunner struct {
 	board             *Board
@@ -166,6 +105,11 @@ func NewClusterGunner(board *Board, shipSizes []int) Gunner {
 	g.markCandidates(shipSizes)
 	return g
 }
+
+// this take the strategry of targeting all points on a diagonal line
+// based on a certain ship size, dividing the entire grid into small boxes and
+// check points on the diagonal lines of each small box
+// this could be better than linear scanning or picking completely random points
 func (g *ClusterGunner) markCandidates(shipSizes []int) {
 	// ASSUME the ship sizes are already sorted in descending order without duplicates
 	for _, shipSize := range shipSizes {
