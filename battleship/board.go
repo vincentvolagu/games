@@ -7,9 +7,12 @@ import (
 	"time"
 )
 
-const EMPTY_SPACE = "."
-const HIT = "#"
-const MISS = "x"
+// const EMPTY_SPACE = "."
+// const HIT = "#"
+// const MISS = "x"
+const EMPTY_SPACE = "🌊"
+const MISS = "👻"
+const HIT = "😁"
 
 type Point struct {
 	X, Y int
@@ -51,28 +54,60 @@ type Ship struct {
 type Board struct {
 	size   int
 	points [][]string
+
+	usesEmoji bool
+}
+
+func NewBoard(size int, usesEmoji bool) *Board {
+	b := &Board{
+		size:      size,
+		usesEmoji: usesEmoji,
+	}
+	b.init(size)
+	return b
 }
 
 func (b *Board) getSize() int {
 	return b.size
 }
-
-func (b *Board) Init(size int) {
-	b.size = size
+func (b *Board) printEmptySpace() string {
+	if b.usesEmoji {
+		return "🌊"
+	}
+	return "."
+}
+func (b *Board) printHit() string {
+	if b.usesEmoji {
+		return "😁"
+	}
+	return "#"
+}
+func (b *Board) printMiss() string {
+	if b.usesEmoji {
+		return "👻"
+	}
+	return "x"
+}
+func (b *Board) printShip(name string) string {
+	if b.usesEmoji {
+		return "🚢"
+	}
+	return name
+}
+func (b *Board) init(size int) {
 	b.points = make([][]string, size)
 	for i := 0; i < size; i++ {
 		b.points[i] = make([]string, size)
 		for j := 0; j < size; j++ {
-			b.points[i][j] = EMPTY_SPACE
+			b.points[i][j] = b.printEmptySpace()
 		}
 	}
 }
-
 func (b *Board) PlaceShipAt(p Point, name string) {
 	if b.IsOutOfBound(p) {
 		panic("point is out of bound")
 	}
-	b.points[p.X][p.Y] = name
+	b.points[p.X][p.Y] = b.printShip(name)
 }
 
 func (b *Board) PickRandomPoint() Point {
@@ -81,6 +116,9 @@ func (b *Board) PickRandomPoint() Point {
 }
 
 func (b Board) columnHeading() []string {
+	if b.usesEmoji {
+		return []string{" ", "A ", "B ", "C ", "D ", "E ", "F ", "G ", "H ", "I ", "J "}
+	}
 	return []string{" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
 }
 func (b Board) Print() {
@@ -105,7 +143,7 @@ func (b Board) PrintForHumanPlayer() {
 		fmt.Print(i)
 		for j := 0; j < b.size; j++ {
 			if b.IsFloatingShip(Point{i, j}) {
-				fmt.Print(EMPTY_SPACE)
+				fmt.Print(b.printEmptySpace())
 			} else {
 				fmt.Print(b.points[i][j])
 			}
@@ -148,29 +186,29 @@ func (b Board) IsEmptySpace(p Point) bool {
 	if b.IsOutOfBound(p) {
 		return false
 	}
-	return b.points[p.X][p.Y] == EMPTY_SPACE
+	return b.points[p.X][p.Y] == b.printEmptySpace()
 }
 func (b Board) IsSunkShip(p Point) bool {
 	if b.IsOutOfBound(p) {
 		return false
 	}
-	return b.points[p.X][p.Y] == HIT
+	return b.points[p.X][p.Y] == b.printHit()
 }
 func (b Board) IsMiss(p Point) bool {
 	if b.IsOutOfBound(p) {
 		return false
 	}
-	return b.points[p.X][p.Y] == MISS
+	return b.points[p.X][p.Y] == b.printMiss()
 }
 func (b Board) Hit(p Point) bool {
 	if b.IsOutOfBound(p) {
 		return false
 	}
 	if b.IsFloatingShip(p) {
-		b.points[p.X][p.Y] = HIT
+		b.points[p.X][p.Y] = b.printHit()
 		return true
 	}
-	b.points[p.X][p.Y] = MISS
+	b.points[p.X][p.Y] = b.printMiss()
 	return false
 }
 func (b Board) AreEmptySpaces(ps []Point) bool {

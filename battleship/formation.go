@@ -16,8 +16,9 @@ type RandomCoordinator struct {
 func MakeRandomCoordinator() ShipCoordinator {
 	return RandomCoordinator{
 		[]ShipCoordinator{
-			LuckyDraw{MakeRandomLineNavigator()},
+			MakeLuckyDraw(),
 			EdgeLover{},
+			MakeClusterArmada(),
 		},
 	}
 }

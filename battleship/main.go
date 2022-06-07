@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+var usesEmoji bool
+
 func main() {
 	ships := []Ship{
 		Ship{"C", 5},
@@ -13,27 +15,8 @@ func main() {
 		Ship{"D", 3},
 		Ship{"T", 2},
 	}
-
-	shipCoordinators := []ShipCoordinator{
-		MakeLuckyDraw(),
-		EdgeLover{},
-		MakeClusterArmada(),
-	}
-	gunnerFactories := []GunnerFactory{
-		LuckyGunnerFactory{},
-		LinearGunnerFactory{},
-		ClusterGunnerFactory{},
-	}
-
-	for _, coordinator := range shipCoordinators {
-		for _, gunnerFactory := range gunnerFactories {
-			name := fmt.Sprint(reflect.TypeOf(coordinator), " vs ", reflect.TypeOf(gunnerFactory))
-			st := &stats{name: name}
-			playComputerPair(ships, coordinator, gunnerFactory, st)
-			st.print()
-		}
-	}
-	// playHuman(ships)
+	ComputerVsComputer(ships)
+	// ComputerVsHuman(ships)
 }
 
 type stats struct {
@@ -53,18 +36,43 @@ func (s stats) print() {
 	fmt.Println("=======================================")
 }
 
+func makeNewBoard() *Board {
+	return NewBoard(10, false)
+}
+
+func ComputerVsComputer(ships []Ship) {
+	shipCoordinators := []ShipCoordinator{
+		MakeLuckyDraw(),
+		EdgeLover{},
+		MakeClusterArmada(),
+	}
+	gunnerFactories := []GunnerFactory{
+		LuckyGunnerFactory{},
+		LinearGunnerFactory{},
+		ClusterGunnerFactory{},
+	}
+
+	for _, coordinator := range shipCoordinators {
+		for _, gunnerFactory := range gunnerFactories {
+			name := fmt.Sprint(reflect.TypeOf(coordinator), " vs ", reflect.TypeOf(gunnerFactory))
+			st := &stats{name: name}
+			playComputerPair(ships, coordinator, gunnerFactory, st)
+			st.print()
+		}
+	}
+}
+
 func playComputerPair(
 	ships []Ship,
 	coordinator ShipCoordinator,
 	gunnerFactory GunnerFactory,
 	stats *stats,
 ) {
-	for i := 0; i < 20; i++ {
-		board := &Board{}
-		board.Init(10)
+	for i := 0; i < 2; i++ {
+		board := makeNewBoard()
 		coordinator.PlaceShips(board, ships)
 
-		// board.Print()
+		board.Print()
 
 		// TODO: extract the hard coded ship size slice here
 		gunner := gunnerFactory.MakeGunner(board, []int{5, 4, 3, 2})
@@ -88,22 +96,20 @@ func playComputerPair(
 		}
 		stats.numberOfGames = stats.numberOfGames + 1
 		stats.totalSteps += steps
-		// board.Print()
-		// fmt.Println("================================================")
+		board.Print()
+		fmt.Println("================================================")
 	}
 }
 
-func playHuman(ships []Ship) {
+func ComputerVsHuman(ships []Ship) {
 	// initialise the computer board and place ships
-	computerBoard := &Board{}
-	computerBoard.Init(10)
-	formation := MakeLuckyDraw()
+	computerBoard := makeNewBoard()
+	formation := MakeRandomCoordinator()
 	formation.PlaceShips(computerBoard, ships)
-	computerBoard.Print()
+	// computerBoard.Print()
 	computerBoard.PrintForHumanPlayer()
 
-	humanBoard := &Board{}
-	humanBoard.Init(10)
+	humanBoard := makeNewBoard()
 	gunner := NewClusterGunner(humanBoard, []int{5, 4, 3, 2})
 
 	// initialise the human player board and ask player to place all ships
