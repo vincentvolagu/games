@@ -15,8 +15,8 @@ func main() {
 		Ship{"D", 3},
 		Ship{"T", 2},
 	}
-	ComputerVsComputer(ships)
-	// ComputerVsHuman(ships)
+	// ComputerVsComputer(ships)
+	ComputerVsHuman(ships)
 }
 
 type stats struct {
@@ -37,7 +37,7 @@ func (s stats) print() {
 }
 
 func makeNewBoard() *Board {
-	return NewBoard(10, false)
+	return NewBoard(10, true)
 }
 
 func ComputerVsComputer(ships []Ship) {
@@ -47,8 +47,8 @@ func ComputerVsComputer(ships []Ship) {
 		MakeClusterArmada(),
 	}
 	gunnerFactories := []GunnerFactory{
-		LuckyGunnerFactory{},
-		LinearGunnerFactory{},
+		// LuckyGunnerFactory{},
+		// LinearGunnerFactory{},
 		ClusterGunnerFactory{},
 	}
 
@@ -138,6 +138,7 @@ func ComputerVsHuman(ships []Ship) {
 		humanBoard.Print()
 	}
 
+	fmt.Println("================================================")
 	fmt.Println("Now both boards are set, let's play")
 	for {
 		// take human player's next target

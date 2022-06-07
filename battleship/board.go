@@ -155,7 +155,7 @@ func (b Board) TransformHumanPointInput(row int, col string) Point {
 	rowIndex := row
 	colIndex := -1
 	for i, v := range b.columnHeading() {
-		if v == strings.ToUpper(col) {
+		if strings.TrimSpace(v) == strings.ToUpper(col) {
 			colIndex = i - 1 // there's an empty left padding
 		}
 	}
