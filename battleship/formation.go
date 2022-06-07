@@ -167,7 +167,7 @@ func (f ClusterArmada) PlaceShips(board *Board, ships []Ship) {
 			// reverse direction and look the other way
 			currentPoint = anchorPoint
 			neighbourNav = neighbourNav.Reverse()
-			continue
+			nextLine = neighbourNav.NextPoint(currentPoint)
 		}
 		for {
 			randPoint = board.PickRandomPoint()
