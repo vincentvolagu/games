@@ -19,19 +19,19 @@ func (f LuckyGunnerFactory) MakeGunner(board *Board, shipSizes []int) Gunner {
 }
 
 func NewLuckyGunner(board *Board) Gunner {
-	return &randomGunner{
+	return &luckyGunner{
 		board,
 		Points{},
 	}
 }
 
-// randomGunner hits random targets without any memory of hit/miss history
-type randomGunner struct {
+// luckyGunner hits random targets without any memory of hit/miss history
+type luckyGunner struct {
 	board        *Board
 	triedTargets Points
 }
 
-func (g *randomGunner) Target() Point {
+func (g *luckyGunner) Target() Point {
 	var p Point
 	for {
 		p = g.board.PickRandomPoint()
@@ -41,10 +41,10 @@ func (g *randomGunner) Target() Point {
 	}
 	return p
 }
-func (g *randomGunner) Hit(p Point) {
+func (g *luckyGunner) Hit(p Point) {
 	g.triedTargets = g.triedTargets.Add(p)
 }
-func (g *randomGunner) Miss(p Point) {
+func (g *luckyGunner) Miss(p Point) {
 	g.triedTargets = g.triedTargets.Add(p)
 }
 
