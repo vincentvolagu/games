@@ -23,18 +23,16 @@ func main() {
 }
 
 type Grid struct {
-	size    int
-	entries [][]int
+	size     int
+	rowBased [][]int
+	colBased [][]int
 }
 
 func newGrid(size int) Grid {
-	g := make([][]int, size)
-	for i := 0; i < size; i++ {
-		g[i] = make([]int, size)
-	}
 	return Grid{
 		size,
-		g,
+		emptyGrid(size),
+		emptyGrid(size),
 	}
 }
 
@@ -43,7 +41,10 @@ func (g Grid) Validate() bool {
 	for i := 0; i < g.size; i++ {
 		seen := make(map[int]bool)
 		for j := 0; j < g.size; j++ {
-			v := g.entries[i][j]
+			v := g.rowBased[i][j]
+			if v <= 0 || v > g.size {
+				return false
+			}
 			if _, exists := seen[v]; exists {
 				return false
 			}
@@ -53,7 +54,10 @@ func (g Grid) Validate() bool {
 	for i := 0; i < g.size; i++ {
 		seen := make(map[int]bool)
 		for j := 0; j < g.size; j++ {
-			v := g.entries[j][i]
+			v := g.rowBased[j][i]
+			if v <= 0 || v > g.size {
+				return false
+			}
 			if _, exists := seen[v]; exists {
 				return false
 			}
@@ -80,18 +84,39 @@ func (g Grid) randOrderedList() []int {
 }
 
 func (g Grid) Fill() {
-	for i := 0; i < g.size; i++ {
-		l := g.randOrderedList()
+	// start with a randomised row 0
+	l := g.randOrderedList()
+	for j := 0; j < g.size; j++ {
+		g.rowBased[0][j] = l[j]
+		g.colBased[j][0] = l[j]
+	}
+
+	// for the following rows, check column to find valid number to put
+	for i := 1; i < g.size; i++ {
+		l = g.randOrderedList()
 		for j := 0; j < g.size; j++ {
-			g.entries[i][j] = l[j]
+			next := l[j]
+			if !g.hasValue(next, g.colBased[j]) {
+				g.rowBased[i][j] = next
+				g.colBased[j][i] = next
+			}
 		}
 	}
+}
+
+func (g Grid) hasValue(needle int, haystack []int) bool {
+	for k := 0; k < g.size; k++ {
+		if needle == haystack[k] {
+			return true
+		}
+	}
+	return false
 }
 
 func (g Grid) Print() {
 	for i := 0; i < g.size; i++ {
 		for j := 0; j < g.size; j++ {
-			fmt.Print("|", g.entries[i][j])
+			fmt.Print("|", g.rowBased[i][j])
 		}
 		fmt.Println("|")
 	}
@@ -99,4 +124,12 @@ func (g Grid) Print() {
 
 func initialiseGridFromInput() Grid {
 	return Grid{}
+}
+
+func emptyGrid(size int) [][]int {
+	g := make([][]int, size)
+	for i := 0; i < size; i++ {
+		g[i] = make([]int, size)
+	}
+	return g
 }
