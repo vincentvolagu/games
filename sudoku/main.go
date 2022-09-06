@@ -8,8 +8,11 @@ import (
 
 func main() {
 	count := 0
+	// grid := newGrid(5)
+	// grid.Fill()
+	// grid.Print()
 	for {
-		grid := newGrid(5)
+		grid := newGrid(9)
 		grid.Fill()
 		found := grid.Validate()
 
@@ -85,21 +88,15 @@ func (g Grid) randOrderedList() []int {
 
 func (g Grid) Fill() {
 	// start with a randomised row 0
-	l := g.randOrderedList()
+	startingRow := g.randOrderedList()
 	for j := 0; j < g.size; j++ {
-		g.rowBased[0][j] = l[j]
-		g.colBased[j][0] = l[j]
+		g.rowBased[0][j] = startingRow[j]
 	}
 
-	// for the following rows, check column to find valid number to put
+	// shift the 1st randomised row to populate the rest rows
 	for i := 1; i < g.size; i++ {
-		l = g.randOrderedList()
 		for j := 0; j < g.size; j++ {
-			next := l[j]
-			if !g.hasValue(next, g.colBased[j]) {
-				g.rowBased[i][j] = next
-				g.colBased[j][i] = next
-			}
+			g.rowBased[i][j] = startingRow[(i+j)%g.size]
 		}
 	}
 }
