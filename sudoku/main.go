@@ -16,7 +16,7 @@ func main() {
 	// grid.Print()
 	count := 0
 	for {
-		grid := newGrid(9)
+		grid := newGrid(16)
 		grid = grid.Fill()
 		found := grid.Validate()
 
@@ -67,21 +67,22 @@ func (g Grid) Validate() bool {
 	}
 
 	// find smaller sub-grid and check numbers in that grid
-	// if subGridSize, hasSubGrid := g.subGridSize(); hasSubGrid {
-	// for i := 0; i < subGridSize; i++ {
-	// 	for j := 0; j < subGridSize; j++ {
-	// 		var sgList []int
-	// 		for k := 0; k < g.size; k++ {
-	// 			row := (i * subGridSize) + (k % subGridSize)
-	// 			col := (j * subGridSize) + (k % subGridSize)
-	// 			sgList = append(sgList, g.rowBased[row][col])
-	// 			if !g.isValidLine(sgList) {
-	// 				return false
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// }
+	if subGridSize, hasSubGrid := g.subGridSize(); hasSubGrid {
+		for i := 0; i < subGridSize; i++ {
+			for j := 0; j < subGridSize; j++ {
+				var sgList []int
+				for k := 0; k < g.size; k++ {
+					row := (i * subGridSize) + (k / subGridSize)
+					col := (j * subGridSize) + (k % subGridSize)
+					sgList = append(sgList, g.rowBased[row][col])
+				}
+				fmt.Println("checking list", sgList)
+				if !g.isValidLine(sgList) {
+					return false
+				}
+			}
+		}
+	}
 
 	return true
 }
@@ -159,7 +160,7 @@ func (g Grid) hasValue(needle int, haystack []int) bool {
 func (g Grid) Print() {
 	for i := 0; i < g.size; i++ {
 		for j := 0; j < g.size; j++ {
-			fmt.Print("|", g.rowBased[i][j])
+			fmt.Print("|", g.rowBased[i][j], "\t")
 		}
 		fmt.Println("|")
 	}
